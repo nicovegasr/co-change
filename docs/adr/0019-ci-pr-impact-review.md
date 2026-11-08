@@ -64,6 +64,3 @@ roadmap milestone 2).
 - T. Zimmermann, P. Weißgerber, S. Diehl, A. Zeller, *Mining Version
   Histories to Guide Software Changes*, ICSE 2004: the same "files changed
   with these were also changed" suggestion, evaluated on open-source history.
-- [CodeScene](https://codescene.com/) offers a commercial version of
-  change-coupling warnings on pull requests; co-change is the free, in-CI,
-  zero-setup slice.
