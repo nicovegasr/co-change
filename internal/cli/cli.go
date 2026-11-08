@@ -20,6 +20,7 @@ import (
 
 const usage = `Usage:
   co-change review --base <ref> [options]  Untouched files that usually change with a PR
+  co-change map [--out DIR] [options]      Architecture map: imports and co-change (HTML)
   co-change index [--rebuild] [--json]     Index history reachable from HEAD
   co-change coupled <file> [options]       Explain historical file co-change
   co-change evaluate [options]             Score coupling on held-out commits
@@ -31,6 +32,13 @@ Review options (ADR-0019):
   --min-support N     Minimum shared commits (default 3)
   --min-ratio R       Minimum co-change ratio, 0..1 (default 0.3)
   --limit N           Maximum suggestions (default 5)
+
+Map options (ADR-0020):
+  --out DIR           Folder to write index.html into (default co-change-map)
+  --repo-url URL      Repository URL for links (default from GitHub Actions)
+  --min-support N     Minimum shared commits between folders (default 5)
+  --min-ratio R       Minimum shared / mean commits of both, 0..1 (default 0.3)
+  --max-files N       Ignore commits changing more files (default 30)
 
 Coupled options:
   --json              Emit a machine-readable report
@@ -74,6 +82,8 @@ func Run(ctx context.Context, dir string, args []string, out io.Writer) error {
 		return runEvaluate(ctx, dir, args[1:], out)
 	case "review":
 		return runReview(ctx, dir, args[1:], out)
+	case "map":
+		return runMap(ctx, dir, args[1:], out)
 	default:
 		return fmt.Errorf("unknown command %q; run co-change --help", args[0])
 	}

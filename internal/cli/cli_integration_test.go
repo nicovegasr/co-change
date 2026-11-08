@@ -321,3 +321,31 @@ func TestRealGitReviewSuggestsUntouchedCoChangesFromBeforeTheBranch(t *testing.T
 		t.Fatalf("%v\n%s", err, md.String())
 	}
 }
+
+func TestRealGitMapWritesThePageWithHiddenCoupling(t *testing.T) {
+	dir := repo(t)
+	write(t, dir, "go.mod", "module m\n")
+	if err := os.MkdirAll(filepath.Join(dir, "api"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "schema"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for i := range 5 {
+		write(t, dir, "api/a.go", "package api\n// "+strings.Repeat("v", i))
+		write(t, dir, "schema/s.go", "package schema\n// "+strings.Repeat("v", i))
+		commit(t, dir)
+	}
+	out := filepath.Join(t.TempDir(), "site")
+	var summary bytes.Buffer
+	if err := Run(context.Background(), dir, []string{"map", "--out", out}, &summary); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(summary.String(), "2 folders · 0 imports · 1 change together · 1 hidden couplings") {
+		t.Fatal(summary.String())
+	}
+	html, err := os.ReadFile(filepath.Join(out, "index.html"))
+	if err != nil || !strings.Contains(string(html), `"hidden":true`) {
+		t.Fatalf("%v", err)
+	}
+}

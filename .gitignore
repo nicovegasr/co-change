@@ -12,3 +12,4 @@ vendor/
 .DS_Store
 .idea/
 .vscode/
+/co-change-map/
