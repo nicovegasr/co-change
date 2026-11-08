@@ -42,6 +42,7 @@ runs:
         MIN_SUPPORT: ${{ inputs.min-support }}
         MIN_RATIO: ${{ inputs.min-ratio }}
         LIMIT: ${{ inputs.limit }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       run: |
         if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
           echo "::error::co-change needs the full history: use actions/checkout with fetch-depth: 0"
@@ -49,6 +50,10 @@ runs:
         fi
         "$RUNNER_TEMP/co-change" review --base "$BASE" --min-support "$MIN_SUPPORT" \
           --min-ratio "$MIN_RATIO" --limit "$LIMIT" > "$RUNNER_TEMP/co-change.md"
+        # The comment is edited in place on every push: say which push it reflects.
+        if [ -n "$HEAD_SHA" ]; then
+          printf '\n<sub>Updated for %s.</sub>\n' "${HEAD_SHA:0:7}" >> "$RUNNER_TEMP/co-change.md"
+        fi
         cat "$RUNNER_TEMP/co-change.md" >> "$GITHUB_STEP_SUMMARY"
 
     - name: Comment on the pull request
