@@ -360,7 +360,7 @@ func renderEvaluation(out io.Writer, e index.Evaluation) error {
 			fmt.Fprintf(&b, "%-10s %4d %6d %6d %9.1f%% %7.1f%% %8.1f%%\n", p.Name, m.K, m.Hits, m.FalsePositives, m.Precision*100, m.Recall*100, m.Coverage*100)
 		}
 	}
-	b.WriteString("\nco-change = coupled with filters · cochange = unfiltered co-change · frequency = global file frequency.\n")
+	b.WriteString("\nco-change = coupled with filters · unfiltered = plain co-change counting · frequency = global file frequency.\n")
 	b.WriteString("One repository's sample is evidence to report, not a general claim (ADR-0009).\n")
 	_, err := io.WriteString(out, b.String())
 	return err

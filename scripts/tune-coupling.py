@@ -53,7 +53,7 @@ def evaluate(workdir, repo, split, config):
     report = json.loads(subprocess.run(command, cwd=f"{workdir}/{repo}", capture_output=True, text=True, check=True).stdout)
     at5 = {p["name"]: next(m for m in p["metrics"] if m["k"] == 5) for p in report["predictors"]}
     return {"cases": len(report["cases"]), "co-change": at5["co-change"]["precision"], "recall": at5["co-change"]["mean_recall"],
-            "cochange": at5["cochange"]["precision"], "frequency": at5["frequency"]["precision"]}
+            "unfiltered": at5["unfiltered"]["precision"], "frequency": at5["frequency"]["precision"]}
 
 
 def main(workdir, grid, split, *only):
@@ -69,7 +69,7 @@ def main(workdir, grid, split, *only):
     for row in sorted(rows, key=lambda r: -r["mean"]):
         print(f'{row["config"]:18} mean {row["mean"] * 100:5.1f}%  ' + "  ".join(f'{r} {row[r]["co-change"] * 100:5.1f}%' for r in repos))
     base = rows[0]
-    print("baselines: " + "  ".join(f'{r} co {base[r]["cochange"] * 100:.1f}% fq {base[r]["frequency"] * 100:.1f}% n={base[r]["cases"]}' for r in repos))
+    print("baselines: " + "  ".join(f'{r} unf {base[r]["unfiltered"] * 100:.1f}% fq {base[r]["frequency"] * 100:.1f}% n={base[r]["cases"]}' for r in repos))
 
 
 if __name__ == "__main__":

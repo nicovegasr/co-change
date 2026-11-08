@@ -139,14 +139,14 @@ func assertMatchesStrictAncestorQueries(t *testing.T, rank string) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		cochange, err := s.Coupled(context.Background(), c.Source, Options{MinSupport: 1, MaxFiles: math.MaxInt, Limit: 10, Before: c.OID})
+		unfiltered, err := s.Coupled(context.Background(), c.Source, Options{MinSupport: 1, MaxFiles: math.MaxInt, Limit: 10, Before: c.OID})
 		if err != nil {
 			t.Fatal(err)
 		}
 		want := map[string][]string{
-			PredictorCoChange:  relationshipPaths(filtered.Relationships),
-			PredictorCochange:  relationshipPaths(cochange.Relationships),
-			PredictorFrequency: bruteForceFrequency(src, parents, c.OID, c.Source, opts),
+			PredictorCoChange:   relationshipPaths(filtered.Relationships),
+			PredictorUnfiltered: relationshipPaths(unfiltered.Relationships),
+			PredictorFrequency:  bruteForceFrequency(src, parents, c.OID, c.Source, opts),
 		}
 		if !reflect.DeepEqual(c.Predictions, want) {
 			t.Errorf("%s/%s predictions %v, want %v", c.OID, c.Source, c.Predictions, want)
