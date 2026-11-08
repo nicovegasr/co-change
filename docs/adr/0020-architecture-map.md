@@ -81,3 +81,14 @@ need configuration), more languages (Rust, PHP, Ruby…), maps per PR.
   no co-change edges; that is the honest result, not a bug.
 - Pages must be enabled with "GitHub Actions" as the source; the workflow
   cannot do it for the user.
+
+## References
+
+- H. Gall, K. Hajek, M. Jazayeri, *Detection of Logical Coupling Based on
+  Product Release History*, ICSM 1998.
+- A. Tornhill, *Your Code as a Crime Scene* (2015) and *Software Design
+  X-Rays* (2018), Pragmatic Bookshelf.
+- [code-maat](https://github.com/adamtornhill/code-maat): source of the
+  co-change defaults (`--min-revs 5`, `--min-shared-revs 5`,
+  `--min-coupling 30`, `--max-changeset-size 30`). Only the numbers are
+  reused, no code.

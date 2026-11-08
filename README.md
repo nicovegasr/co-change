@@ -165,6 +165,17 @@ co-change map                                  # the architecture map, in co-cha
 
 ---
 
+## Prior art and credits
+
+co-change stands on well-known research; none of the ideas are new, only the packaging.
+
+- **Logical coupling**: H. Gall, K. Hajek, M. Jazayeri, *Detection of Logical Coupling Based on Product Release History*, ICSM 1998. Files that change together are coupled, whatever the code says.
+- **"Programmers who changed this also changed…"**: T. Zimmermann, P. Weißgerber, S. Diehl, A. Zeller, *Mining Version Histories to Guide Software Changes*, ICSE 2004. The idea behind `co-change review`.
+- **Hotspots and temporal coupling for working developers**: Adam Tornhill, *Your Code as a Crime Scene* (Pragmatic Bookshelf, 2015) and *Software Design X-Rays* (2018). The architecture map borrows the defaults of his open-source [code-maat](https://github.com/adamtornhill/code-maat), and the commit TUI's `/audit` ranks his hotspots. No code from code-maat is used.
+- If you need the full commercial version of these ideas (code health, team analysis, hosted dashboards), look at Tornhill's [CodeScene](https://codescene.com/). co-change aims to be the free, zero-setup slice that runs inside your CI.
+
+---
+
 ## Documentation
 
 | Document | Contents |

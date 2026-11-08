@@ -58,3 +58,12 @@ roadmap milestone 2).
   caching lands.
 - The TUI, `/audit`, `/stats` and `/changes` keep working but are frozen; the
   roadmap and README lead with the CI product.
+
+## References
+
+- T. Zimmermann, P. Weißgerber, S. Diehl, A. Zeller, *Mining Version
+  Histories to Guide Software Changes*, ICSE 2004: the same "files changed
+  with these were also changed" suggestion, evaluated on open-source history.
+- [CodeScene](https://codescene.com/) offers a commercial version of
+  change-coupling warnings on pull requests; co-change is the free, in-CI,
+  zero-setup slice.

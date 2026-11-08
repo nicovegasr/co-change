@@ -165,6 +165,17 @@ co-change map                                  # el mapa de arquitectura, en co-
 
 ---
 
+## Antecedentes y créditos
+
+co-change se apoya en investigación conocida; ninguna de las ideas es nueva, solo el envoltorio.
+
+- **Acoplamiento lógico**: H. Gall, K. Hajek, M. Jazayeri, *Detection of Logical Coupling Based on Product Release History*, ICSM 1998. Los archivos que cambian juntos están acoplados, diga lo que diga el código.
+- **"Quien cambió esto también cambió…"**: T. Zimmermann, P. Weißgerber, S. Diehl, A. Zeller, *Mining Version Histories to Guide Software Changes*, ICSE 2004. La idea detrás de `co-change review`.
+- **Hotspots y acoplamiento temporal para el día a día**: Adam Tornhill, *Your Code as a Crime Scene* (Pragmatic Bookshelf, 2015) y *Software Design X-Rays* (2018). El mapa de arquitectura toma los valores por defecto de su herramienta open source [code-maat](https://github.com/adamtornhill/code-maat), y el `/audit` del TUI ordena por sus hotspots. No se usa código de code-maat.
+- Si necesitas la versión comercial completa de estas ideas (salud del código, análisis de equipos, dashboards alojados), mira [CodeScene](https://codescene.com/), de Tornhill. co-change quiere ser la parte gratuita y sin configuración que corre dentro de tu CI.
+
+---
+
 ## Documentación
 
 | Documento | Contenido |
