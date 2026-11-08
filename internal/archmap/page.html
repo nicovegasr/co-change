@@ -431,6 +431,7 @@
 
     <script>
       const data = /*__DATA__*/ null;
+      for (const list of ['units', 'imports', 'cochanges']) data[list] ??= [];
       const units = Object.fromEntries(data.units.map((unit) => [unit.id, unit]));
       const escapeHtml = (text) =>
         String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
