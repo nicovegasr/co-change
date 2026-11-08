@@ -1,11 +1,20 @@
 # Changelog
 
-All notable changes to conventional-commit-tui are documented here. Format follows
+All notable changes to co-change are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is
 [SemVer](https://semver.org/). (Auto-derivation from conventional commits is a
 later goal — ADR-0004.)
 
 ## [Unreleased]
+
+### Changed
+
+- The product is now a CI pull-request impact review (ADR-0019). The binary,
+  repository and Go module are renamed `nib` → `co-change`; `.nibignore`
+  becomes `.cochangeignore`, the index moves to `.git/co-change/` and the
+  settings to `~/.config/co-change/`. The commit TUI keeps working, frozen.
+- `evaluate` names its baselines `co-change`, `unfiltered` and `frequency`.
+
 
 ### Fixed
 
@@ -16,6 +25,12 @@ later goal — ADR-0004.)
   the current directory no longer fails with `pathspec did not match`.
 
 ### Added
+
+- `co-change review --base <ref>`: the untouched files that usually change
+  with a pull request's files, from history before its merge base, with
+  evidence commits; Markdown for the PR comment or `--json` (ADR-0019).
+- A composite GitHub Action (`action.yml`) that runs the review and keeps one
+  comment on the pull request up to date; this repository runs it on itself.
 
 - `/stats` in the command palette: commits of the current branch by
   conventional type (bars, count and share, `sin tipo` for subjects without a

@@ -13,7 +13,7 @@ make tools      # install golangci-lint + lefthook, wire git hooks
 make check            # fmt + vet + lint + test — the pre-commit gate
 make cover            # per-package coverage gate (≥80% domain) — pre-push & CI
 make test-integration # real git, happy paths (build tag: integration)
-make build            # build ./nib
+make build            # build ./co-change
 make run              # build and run
 make help             # list all targets
 ```

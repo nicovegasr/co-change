@@ -1,130 +1,73 @@
-# nib
+# co-change
 
 [English](README.md) · **Español**
 
-![CI](https://github.com/nicovegasr/conventional-commit-tui/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/nicovegasr/co-change/actions/workflows/ci.yml/badge.svg)
 
-Una herramienta de terminal para hacer [Conventional Commits](https://www.conventionalcommits.org/) en una línea y **no olvidarte de nada**: mientras marcas archivos, nib te dice qué otros suelen cambiar con ellos según el historial de git del repo.
+Una GitHub Action que te dice, en cada pull request, **qué archivos suelen cambiar con los que has cambiado y se han quedado sin tocar**, con los commits que lo demuestran.
 
-Pensada para tenerla abierta en la terminal de VSCode e ir commiteando al vuelo.
+Cambiaste la API pero no su cliente. Tocaste la migración pero no el modelo. La historia de tu repo ya sabe que esos archivos viajan juntos; co-change la lee y deja un único comentario en el PR:
 
-![nib: marcas un archivo y aparecen sus relacionados](assets/tui.gif)
+> **co-change** · files that usually change with this PR but are untouched:
+>
+> | File | Usually changes with | Co-change | Evidence |
+> |---|---|---|---|
+> | `CHANGELOG.md` | `main.go` | 90% (9 commits) | 614c265, 61d6cfa, ef02702 |
+> | `internal/audit/audit_test.go` | `internal/audit/audit.go` | 75% (3 commits) | 8b6387b, d85798c, d0cc3f0 |
+> | `go.sum` | `go.mod` | 75% (3 commits) | ee98508, a046d1a, cdac97a |
+>
+> <sub>Historical co-change before 521568b, not a dependency analysis.</sub>
 
----
-
-## Qué te da
-
-1. **Commits en una línea**: marcas archivos → eliges el tipo → escribes el mensaje → `enter`. Con ratón o teclado.
-2. **Archivos relacionados**: qué suele cambiar con lo que has marcado, y cuáles de esos tienes modificados sin marcar (el típico test que se te olvida).
-3. **Análisis desde la CLI**: `nib coupled <archivo>` explica qué cambia con un archivo, con porcentajes y los commits que lo demuestran.
-4. **Dentro del TUI, a un `/`**: revisa cada diff y salta a tu editor (`/changes`), mira tus commits por tipo (`/stats`), encuentra los archivos que más cambian (`/audit`) y apaga lo pesado (`/settings`).
-5. **Medido, no prometido**: `nib evaluate` comprueba en commits reales si las sugerencias aciertan. Resultados más abajo.
-
-Todo es local: nib solo lee tu repo con `git` y guarda su índice dentro de `.git/`.
+Sin IA adivinando, sin configuración y sin que el código salga del runner: es historia de git pura, y cada fila enlaza a commits que puedes abrir.
 
 ---
 
-## Instalación
+## Úsala
 
-Requiere Go 1.26+ y git.
+```yaml
+# .github/workflows/co-change.yml
+name: co-change
+on: pull_request
 
-```bash
-git clone https://github.com/nicovegasr/conventional-commit-tui
-cd conventional-commit-tui
-make build                     # genera ./nib
-make install                   # instala nib en ~/go/bin (úsalo desde cualquier repo)
-cp nib ~/.local/bin/           # o cualquier carpeta de tu PATH
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0        # co-change necesita la historia completa
+      - uses: nicovegasr/co-change@main
 ```
 
-Después, dentro de cualquier repo:
-
-```bash
-nib
-```
-
----
-
-## El TUI — commitear en una línea
-
-| Acción | Teclado | Ratón |
+| Input | Por defecto | Qué es |
 |---|---|---|
-| Marcar / desmarcar un archivo | `espacio` | click en el archivo |
-| Moverse por la lista | `j` / `k` o flechas | — |
-| Elegir el tipo (`feat`, `fix`, …) | `tab` + la inicial | click en `[ feat ▾ ]` |
-| Escribir el mensaje y commitear | escribir + `enter` | click en el mensaje |
-| Volver atrás / salir | `esc` · `q` · `ctrl+c` | — |
+| `base` | la rama base del PR | Rama o commit al que apunta el PR |
+| `min-support` | `3` | Mínimo de commits en que ambos archivos cambiaron juntos |
+| `min-ratio` | `0.3` | Mínima proporción de commits del archivo cambiado que también tocaron la sugerencia |
+| `limit` | `5` | Máximo de sugerencias |
+| `token` | `github.token` | Token con permiso para comentar |
 
-Debajo de la línea de commit verás el subject exacto que se va a crear (`→ feat: … .`), con el punto final ya puesto. Hace `git add` **solo de los archivos marcados**, nunca `git add .`.
-
-La sesión no se cierra al commitear: la lista y el git log se recargan cada 2 s, así que lo que cambies en el editor, los `git add` o los commits que hagas desde otra terminal aparecen solos. Tus marcas se mantienen.
-
-### Relacionados
-
-Al marcar archivos, la columna derecha muestra los cinco que más suelen cambiar con ellos:
-
-- `+` en amarillo: está **modificado y sin marcar**. Probablemente se te olvida.
-- `·` en gris: suele cambiar con lo marcado, pero no lo has tocado.
-- `↔` en la lista de archivos: el mismo aviso, junto al archivo.
-
-El porcentaje es la proporción de commits del archivo marcado que también tocaron ese otro. El índice se crea solo la primera vez (en un repo grande tarda unos segundos, en segundo plano) y se mantiene al día tras cada commit, checkout o rebase. Si algo falla, el panel se queda en una línea gris y puedes commitear igual.
-
-Con menos de 80 columnas de ancho, la columna derecha se oculta para no estorbar al flujo mínimo.
+La revisión también se escribe en el resumen del job. Los PRs desde forks reciben un token de solo lectura, así que solo tienen el resumen.
 
 ---
 
-## Comandos dentro del TUI — `/`
+## Cómo funciona
 
-Escribe `/` con el mensaje vacío (o haz click en `/ comandos`) para abrir la paleta, teclea unas letras y pulsa `enter`. `esc` te devuelve a la vista de commit. Puedes lanzar nib desde cualquier subcarpeta del repo.
+1. Indexa la historia del repo dentro del runner (`.git/co-change/`).
+2. Toma los archivos que el PR cambia desde que se separó (el merge base).
+3. Para cada uno, busca los archivos que cambiaron con él **en la historia anterior al merge base**, así los commits del propio PR nunca confirman sus sugerencias.
+4. Se queda con los archivos sin tocar que siguen existiendo y pasan el filtro de ruido, ordenados dando más peso a la historia reciente (vida media de 90 días).
+5. Crea un comentario y lo actualiza en cada push. Si no encuentra nada no publica nada, o actualiza su comentario anterior para decirlo.
 
-### Revisa tus cambios — `/changes`
+Es **informativa**: nunca falla el check ni bloquea un merge.
 
-![/changes: los archivos cambiados y el diff del seleccionado](assets/changes.png)
+### Quita ruido — `.cochangeignore`
 
-A la izquierda los archivos cambiados; a la derecha el archivo entero con lo añadido en verde y lo borrado en rojo. Pensado para revisar lo que ha cambiado un agente o una sesión larga sin abrir un IDE.
-
-| Acción | Teclado | Ratón |
-|---|---|---|
-| Filtrar archivos por ruta | `/` y escribir | click en el buscador |
-| Cambiar de archivo / scroll del diff | `j` / `k` (`tab` cambia de panel) | click · rueda |
-| Cambio siguiente / anterior | `n` / `p` | las marcas de color de la barra |
-| Media página | `ctrl+d` / `ctrl+u` | arrastrar la barra |
-| Marcar el archivo para el commit | `espacio` | — |
-| Editar el archivo en ese cambio | `e` | — |
-
-`e` le pasa la terminal a tu editor, abierto en el cambio que estás viendo, y al salir nib recarga el diff. El editor es `$VISUAL` o `$EDITOR` (p. ej. `export EDITOR=vim` en tu `.zshrc`); si no hay ninguno, `micro`, `nano` o `vi`. nib nunca edita archivos por sí mismo.
-
-### Tus commits por tipo — `/stats`
-
-![/stats: commits por tipo y actividad diaria](assets/stats.png)
-
-Los commits de la rama actual por tipo y su actividad: por día hasta 30 días, por semana a partir de ahí. `d` o un click en el título cambia entre 7 · 30 · 90 · 365 días. Los commits sin prefijo `tipo:` cuentan como `sin tipo`; el culpable habitual es el título de squash de GitHub (`Feat/audit (#13)`), así que ponle a tus PR un título convencional.
-
-### Los archivos que más cambian — `/audit`
-
-![/audit: archivos ordenados por número de commits](assets/audit.png)
-
-Archivos ordenados por **cuántos commits los tocaron** (los hotspots de Adam Tornhill); las líneas cambiadas son solo contexto. Los que pasan el umbral de `/settings` salen como `refactor?` y los que se acercan, `vigilar`. `d` cambia la ventana. Los lockfiles y el build se ignoran; añade tus patrones en un `.auditignore` en la raíz, con el mismo formato que `.nibignore`.
-
-### Apaga lo que no uses — `/settings`
-
-El panel de git log, el de relacionados, la captura del ratón (apagada = selección y scroll nativos de la terminal), el alcance del log (rama actual o todas), cada cuánto se recarga y los valores por defecto de `/audit`. Se aplica al momento y se guarda en `~/.config/nib/settings.toml`.
-
----
-
-## ¿Qué suele cambiar con este archivo? — `nib coupled`
-
-![nib coupled en la terminal](assets/coupled.png)
-
-```bash
-nib index                                      # crea o actualiza el índice
-nib coupled internal/ui/model.go               # relacionados, con evidencia
-nib coupled internal/ui/model.go --json        # salida para otras herramientas
-nib coupled internal/ui/model.go --before v1.0 # solo historia anterior a un commit
-```
-
-Cada fila dice cuántos commits compartieron ambos archivos (`6/7`) y cita commits concretos que puedes abrir con `git show`. Por defecto cuenta cualquier co-cambio, ignora commits masivos (más de 50 archivos) y da más peso a lo reciente (vida media de 90 días).
-
-Para quitar ruido (lockfiles, changelogs, generados), crea un `.nibignore` en la raíz con un glob o directorio por línea. No hace falta reindexar:
+Lockfiles, changelogs o código generado pueden co-cambiar con todo. Añade un `.cochangeignore` en la raíz con un glob o directorio por línea:
 
 ```gitignore
 *.lock
@@ -135,13 +78,13 @@ dist/
 
 ---
 
-## ¿Funciona de verdad? — `nib evaluate`
+## ¿Funciona de verdad?
 
-`nib evaluate` esconde commits del pasado y pregunta a nib, usando **solo la historia anterior** a cada uno, qué otros archivos cambiaron. Compara con dos referencias: contar sin filtros qué cambió junto (`co-cambio`) y sugerir los archivos más tocados del repo (`frecuencia`).
+`co-change evaluate` esconde commits del pasado y pregunta, usando **solo la historia anterior** a cada uno, qué otros archivos cambiaron. Compara con dos referencias: contar sin filtros qué cambió junto (`unfiltered`) y sugerir los archivos más tocados del repo (`frequency`).
 
 Precisión de las 5 primeras sugerencias en los commits más recientes de cada repo (los parámetros se ajustaron con commits más antiguos):
 
-| Repo | nib | co-cambio | frecuencia |
+| Repo | co-change | unfiltered | frequency |
 |---|---:|---:|---:|
 | fzf (Go) | **30.6%** | 23.9% | 18.0% |
 | Django (Python) | **13.1%** | 11.5% | 2.3% |
@@ -152,18 +95,39 @@ Precisión de las 5 primeras sugerencias en los commits más recientes de cada r
 | Blog personal (Astro) | 22.3% | **23.3%** | 11.6% |
 | media de 7 repos | **18.0%** | 17.3% | 6.1% |
 
-Lectura honesta: fijarse en **lo que cambia con tu archivo** acierta de media unas 3 veces más que fijarse en lo que más cambia en general (desde 1,7× en fzf hasta 10× en OkHttp). Los filtros de nib aportan poco sobre el co-cambio simple en estas muestras pequeñas (24–52 casos por repo); en muestras más grandes la ventaja es de unos 2,5 puntos. Metodología y números completos en [docs/research/file-coupling-benchmarks.md](docs/research/file-coupling-benchmarks.md).
+Lectura honesta: fijarse en **lo que cambia con tu archivo** acierta de media unas 3 veces más que fijarse en lo que más cambia en general (desde 1,7× en fzf hasta 10× en OkHttp). Los filtros aportan poco sobre el co-cambio simple en estas muestras pequeñas (24–52 casos por repo); en muestras más grandes la ventaja es de unos 2,5 puntos. Estos números miden el ranking, no el comentario del PR: sus umbrales (`min-support 3`, `min-ratio 0.3`) son una primera elección para que no haga ruido, aún sin validar. Metodología en [docs/research/file-coupling-benchmarks.md](docs/research/file-coupling-benchmarks.md).
+
+---
+
+## Úsalo en local
+
+Requiere Go 1.26+ y git.
 
 ```bash
-nib evaluate --prefix src/ --ext .ts,.tsx     # mide nib en tu propio repo
+git clone https://github.com/nicovegasr/co-change
+cd co-change
+make install                                   # instala co-change en ~/go/bin
 ```
+
+Después, dentro de cualquier repo:
+
+```bash
+co-change review --base main                   # el comentario del PR de tu rama
+co-change review --base main --json            # lo mismo, para otras herramientas
+co-change coupled internal/ui/model.go         # qué cambia con un archivo, con evidencia
+co-change coupled src/app.ts --before v1.0     # solo la historia anterior a un commit
+co-change evaluate --prefix src/ --ext .ts     # mídelo en tu propio repo
+```
+
+`co-change` sin argumentos abre una herramienta de commits en la terminal (Conventional Commits en una línea, con los archivos relacionados mientras marcas); mira [docs/tui.es.md](docs/tui.es.md).
 
 ---
 
 ## Límites
 
 - Un archivo es una **ruta**: los renombrados no unen su historia.
-- Solo la historia alcanzable desde `HEAD`; los clones superficiales (`--depth`) se rechazan.
+- Solo la historia alcanzable desde `HEAD`; los clones superficiales se rechazan.
+- La Action compila co-change desde el código e indexa desde cero en cada ejecución (menos de un segundo en este repo; los repos grandes tardarán más hasta que llegue la caché).
 - Co-cambio histórico no es dependencia ni predicción de bugs: es una pista.
 
 ---
@@ -172,9 +136,10 @@ nib evaluate --prefix src/ --ext .ts,.tsx     # mide nib en tu propio repo
 
 | Documento | Contenido |
 |---|---|
-| [docs/architecture.md](docs/architecture.md) | Paquetes, flujo y reglas de diseño |
-| [docs/adr/](docs/adr/) | Las decisiones, una por archivo (índice, evaluación, panel de relacionados…) |
+| [docs/adr/](docs/adr/) | Las decisiones, una por archivo (ADR-0019: el enfoque de CI) |
 | [docs/research/file-coupling-benchmarks.md](docs/research/file-coupling-benchmarks.md) | Benchmarks y evaluaciones en repos reales |
+| [docs/architecture.md](docs/architecture.md) | Paquetes, flujo y reglas de diseño |
+| [docs/tui.es.md](docs/tui.es.md) | El TUI de commits |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Qué viene después |
 | [docs/contributing.md](docs/contributing.md) | Cómo trabajar en el repo |
 
@@ -187,5 +152,3 @@ make check   # formato, vet, lint y tests (pre-commit)
 make ci      # todo lo anterior + cobertura ≥ 80% + integración con git real
 make bench   # microbenchmarks del índice
 ```
-
-Las capturas de este README se generan con [vhs](https://github.com/charmbracelet/vhs) sobre un clon de demo: `vhs assets/tapes/<nombre>.tape` (`tui`, `changes`, `stats`, `audit`, `coupled`).
