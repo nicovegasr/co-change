@@ -90,5 +90,7 @@ need configuration), more languages (Rust, PHP, Ruby…), maps per PR.
   X-Rays* (2018), Pragmatic Bookshelf.
 - [code-maat](https://github.com/adamtornhill/code-maat): source of the
   co-change defaults (`--min-revs 5`, `--min-shared-revs 5`,
-  `--min-coupling 30`, `--max-changeset-size 30`). Only the numbers are
-  reused, no code.
+  `--min-coupling 30`, `--max-changeset-size 30`) and of the degree of
+  coupling (shared revisions over the average revisions of both modules,
+  `logical_coupling.clj`). Only the numbers and the formula are reused, no
+  code.
