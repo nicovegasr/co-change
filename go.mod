@@ -1,4 +1,4 @@
-module github.com/nicovegasr/conventional-commit-tui
+module github.com/nicovegasr/co-change
 
 go 1.26
 

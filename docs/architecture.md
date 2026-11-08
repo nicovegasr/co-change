@@ -31,8 +31,12 @@ A human-readable map of conventional-commit-tui. For the *why* behind decisions,
 
 ## Big picture
 
-nib is a terminal-first conventional-commit tool: a Bubble Tea TUI over a small
-set of typed domain packages that shell out to `git`.
+co-change is a CI pull-request impact review (ADR-0019): `action.yml` runs
+`co-change review`, which reads git history into a local index
+(`internal/history` → `internal/index`) and ranks the untouched files that
+usually change with the PR's files (`internal/cli/review.go`). The original
+commit TUI (frozen) is a Bubble Tea UI over typed domain packages that shell
+out to `git`.
 
 ```
 main.go                 entrypoint; builds the TUI and injects adapters

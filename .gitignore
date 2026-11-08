@@ -1,5 +1,5 @@
 # Binaries
-/nib
+/co-change
 /dist/
 *.exe
 
@@ -12,3 +12,4 @@ vendor/
 .DS_Store
 .idea/
 .vscode/
+/co-change-map/

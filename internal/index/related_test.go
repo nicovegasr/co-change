@@ -44,3 +44,18 @@ func TestCoupledWithAnyWithoutHistoryIsEmpty(t *testing.T) {
 		t.Error("accepted invalid options")
 	}
 }
+
+func TestCoupledWithAnyNamesTheSourceOfEachRelationship(t *testing.T) {
+	s := linear(t, "AB", "AB", "DE")
+	got, err := s.CoupledWithAny(context.Background(), []string{"A", "D"}, DefaultOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+	sources := map[string]string{}
+	for _, r := range got {
+		sources[r.Path] = r.Source
+	}
+	if want := map[string]string{"B": "A", "E": "D"}; !reflect.DeepEqual(sources, want) {
+		t.Fatalf("sources %v, want %v", sources, want)
+	}
+}

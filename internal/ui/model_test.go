@@ -9,8 +9,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/commit"
-	"github.com/nicovegasr/conventional-commit-tui/internal/git"
+	"github.com/nicovegasr/co-change/internal/commit"
+	"github.com/nicovegasr/co-change/internal/git"
 )
 
 // fakeRepo is a trivial in-memory Repo for testing model transitions.
@@ -822,7 +822,7 @@ func TestStaleIndexRefreshesOnceThenGivesUp(t *testing.T) {
 	next, cmd := m.Update(cmd())
 	m = next.(Model)
 	if !m.historyBusy || cmd == nil {
-		t.Fatal("a stale index (commit made outside nib) must trigger a refresh")
+		t.Fatal("a stale index (commit made outside co-change) must trigger a refresh")
 	}
 	m = run(t, m, cmd) // refreshed -> queries again
 	next, cmd = m.Update(relatedLoadedMsg{gen: m.relatedGen, err: ErrStaleHistory})
@@ -923,7 +923,7 @@ func TestExternalCommitRefreshesHistory(t *testing.T) {
 	}
 	next, cmd = m.Update(logLoadedMsg{content: "bbb second\naaa first\n"})
 	if cmd == nil || !next.(Model).historyBusy {
-		t.Error("a new commit made outside nib must refresh the index")
+		t.Error("a new commit made outside co-change must refresh the index")
 	}
 }
 

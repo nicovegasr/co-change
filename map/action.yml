@@ -1,0 +1,57 @@
+name: co-change architecture map
+description: Builds an HTML architecture map of the repository (folders, imports and co-change) and uploads it as a GitHub Pages artifact.
+author: nicovegasr
+branding:
+  icon: map
+  color: green
+
+inputs:
+  min-support:
+    description: Minimum commits two folders changed in together.
+    default: '5'
+  min-ratio:
+    description: Minimum shared commits over the mean commits of both folders, 0..1.
+    default: '0.3'
+  max-files:
+    description: Ignore commits changing more files than this.
+    default: '30'
+  upload:
+    description: Upload the page as a GitHub Pages artifact (set false to only build it into co-change-map/).
+    default: 'true'
+
+outputs:
+  path:
+    description: Folder holding index.html.
+    value: co-change-map
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: ${{ github.action_path }}/../go.mod
+        cache-dependency-path: ${{ github.action_path }}/../go.sum
+
+    - name: Build co-change
+      shell: bash
+      working-directory: ${{ github.action_path }}/..
+      run: go build -o "$RUNNER_TEMP/co-change" .
+
+    - name: Draw the map
+      shell: bash
+      env:
+        MIN_SUPPORT: ${{ inputs.min-support }}
+        MIN_RATIO: ${{ inputs.min-ratio }}
+        MAX_FILES: ${{ inputs.max-files }}
+      run: |
+        if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+          echo "::error::co-change needs the full history: use actions/checkout with fetch-depth: 0"
+          exit 1
+        fi
+        "$RUNNER_TEMP/co-change" map --out co-change-map --min-support "$MIN_SUPPORT" \
+          --min-ratio "$MIN_RATIO" --max-files "$MAX_FILES" | tee -a "$GITHUB_STEP_SUMMARY"
+
+    - if: inputs.upload == 'true'
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: co-change-map

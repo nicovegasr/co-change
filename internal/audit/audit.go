@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/pathignore"
+	"github.com/nicovegasr/co-change/internal/pathignore"
 )
 
 // Hotspot is one file ranked by change frequency.
@@ -77,7 +77,7 @@ func Run(days int) (Report, error) {
 }
 
 // loadIgnore returns the defaults plus the optional local .auditignore, which
-// shares the .nibignore format, each pattern once.
+// shares the .cochangeignore format, each pattern once.
 func loadIgnore() ([]string, error) {
 	custom, err := pathignore.Load(".auditignore")
 	if err != nil {

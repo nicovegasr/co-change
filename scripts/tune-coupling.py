@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Coupling tuning protocols (ADR-0010, ADR-0011, ADR-0013): run `nib evaluate` per config.
+"""Coupling tuning protocols (ADR-0010, ADR-0011, ADR-0013): run `co-change evaluate` per config.
 
 Usage: scripts/tune-coupling.py WORKDIR GRID tune|validate [CONFIG ...]
 
 GRID is adr-0010, adr-0011 or adr-0013 (the adr-0011 grid under ADR-0012); it fixes the repositories and the configuration
-grid. WORKDIR holds a `nib` binary and full clones named after the
-repositories, each indexed and with the shared .nibignore
+grid. WORKDIR holds a `co-change` binary and full clones named after the
+repositories, each indexed and with the shared .cochangeignore
 (docs/research/file-coupling-benchmarks.md). CONFIG restricts the run, e.g.
 s1/f50/recent90 (support/max-files/rank). Prints precision@5 per repository,
 best mean first, and writes WORKDIR/<grid>-<split>.json.
@@ -49,11 +49,11 @@ def config_args(name):
 
 def evaluate(workdir, repo, split, config):
     windows = SMALL_WINDOWS if repo == "blog" else WINDOWS
-    command = [f"{workdir}/nib", "evaluate", "--json", *config_args(config), "--case-max-files", "50", *SOURCES[repo], *windows[split]]
+    command = [f"{workdir}/co-change", "evaluate", "--json", *config_args(config), "--case-max-files", "50", *SOURCES[repo], *windows[split]]
     report = json.loads(subprocess.run(command, cwd=f"{workdir}/{repo}", capture_output=True, text=True, check=True).stdout)
     at5 = {p["name"]: next(m for m in p["metrics"] if m["k"] == 5) for p in report["predictors"]}
-    return {"cases": len(report["cases"]), "nib": at5["nib"]["precision"], "nib_recall": at5["nib"]["mean_recall"],
-            "cochange": at5["cochange"]["precision"], "frequency": at5["frequency"]["precision"]}
+    return {"cases": len(report["cases"]), "co-change": at5["co-change"]["precision"], "recall": at5["co-change"]["mean_recall"],
+            "unfiltered": at5["unfiltered"]["precision"], "frequency": at5["frequency"]["precision"]}
 
 
 def main(workdir, grid, split, *only):
@@ -62,14 +62,14 @@ def main(workdir, grid, split, *only):
     rows = []
     for config in configs:
         row = {"config": config, **{repo: evaluate(workdir, repo, split, config) for repo in repos}}
-        row["mean"] = sum(row[repo]["nib"] for repo in repos) / len(repos)
+        row["mean"] = sum(row[repo]["co-change"] for repo in repos) / len(repos)
         rows.append(row)
     with open(f"{workdir}/{grid}-{split}.json", "w") as out:
         json.dump(rows, out, indent=1)
     for row in sorted(rows, key=lambda r: -r["mean"]):
-        print(f'{row["config"]:18} mean {row["mean"] * 100:5.1f}%  ' + "  ".join(f'{r} {row[r]["nib"] * 100:5.1f}%' for r in repos))
+        print(f'{row["config"]:18} mean {row["mean"] * 100:5.1f}%  ' + "  ".join(f'{r} {row[r]["co-change"] * 100:5.1f}%' for r in repos))
     base = rows[0]
-    print("baselines: " + "  ".join(f'{r} co {base[r]["cochange"] * 100:.1f}% fq {base[r]["frequency"] * 100:.1f}% n={base[r]["cases"]}' for r in repos))
+    print("baselines: " + "  ".join(f'{r} unf {base[r]["unfiltered"] * 100:.1f}% fq {base[r]["frequency"] * 100:.1f}% n={base[r]["cases"]}' for r in repos))
 
 
 if __name__ == "__main__":

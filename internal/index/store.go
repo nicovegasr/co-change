@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/history"
+	"github.com/nicovegasr/co-change/internal/history"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -21,10 +21,10 @@ const schemaVersion = 1
 var bucketNames = []string{"meta", "commits", "oids", "files", "paths", "touches"}
 
 // ErrRewrite requires an explicit rebuild instead of mixing divergent histories.
-var ErrRewrite = errors.New("history diverged from indexed HEAD; run nib index --rebuild")
+var ErrRewrite = errors.New("history diverged from indexed HEAD; run co-change index --rebuild")
 
 // ErrStale prevents interpreting an old snapshot as the current repository.
-var ErrStale = errors.New("index is stale; run nib index")
+var ErrStale = errors.New("index is stale; run co-change index")
 
 // Source supplies an immutable snapshot and streams unseen history.
 type Source interface {
@@ -61,7 +61,7 @@ func Open(path string, readOnly bool) (*Store, error) {
 	}
 	db, err := bolt.Open(path, 0o600, &bolt.Options{ReadOnly: readOnly, Timeout: time.Second})
 	if err != nil {
-		return nil, fmt.Errorf("open history index (run nib index if absent): %w", err)
+		return nil, fmt.Errorf("open history index (run co-change index if absent): %w", err)
 	}
 	return &Store{db: db}, nil
 }
@@ -86,7 +86,7 @@ func metadata(tx *bolt.Tx) (Metadata, error) {
 		return m, err
 	}
 	if m.Version != schemaVersion {
-		return m, errors.New("unsupported index schema; run nib index --rebuild")
+		return m, errors.New("unsupported index schema; run co-change index --rebuild")
 	}
 	return m, nil
 }
@@ -105,7 +105,7 @@ func (s *Store) Check(identity, head string) error {
 		return err
 	}
 	if m.Identity != identity {
-		return errors.New("index belongs to another repository; run nib index --rebuild")
+		return errors.New("index belongs to another repository; run co-change index --rebuild")
 	}
 	if m.Head != head {
 		return ErrStale
@@ -196,7 +196,7 @@ func (s *Store) Update(ctx context.Context, src Source, rebuild bool) (Result, e
 
 func checkAdvance(ctx context.Context, src Source, m Metadata) error {
 	if m.Identity != "" && m.Identity != src.Identity() {
-		return errors.New("repository identity changed; run nib index --rebuild")
+		return errors.New("repository identity changed; run co-change index --rebuild")
 	}
 	if m.Head == "" || m.Head == src.Revision() {
 		return nil

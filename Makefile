@@ -1,9 +1,9 @@
-# conventional-commit-tui — developer tasks.
+# co-change — developer tasks.
 # Single source of truth for the quality gate. lefthook (pre-commit) and CI
 # both call these targets; never duplicate the commands elsewhere.
 
 GO        ?= go
-BINARY    ?= nib
+BINARY    ?= co-change
 PKGS      := ./...
 
 .DEFAULT_GOAL := help
@@ -14,11 +14,11 @@ help: ## Show this help.
 		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: build
-build: ## Build the nib binary.
+build: ## Build the co-change binary.
 	$(GO) build -o $(BINARY) .
 
 .PHONY: install
-install: ## Install nib into $(go env GOPATH)/bin, to run it from any repository.
+install: ## Install co-change into $(go env GOPATH)/bin, to run it from any repository.
 	$(GO) build -o "$$($(GO) env GOPATH)/bin/$(BINARY)" .
 
 .PHONY: test
@@ -69,5 +69,5 @@ tools: ## Install dev tools (golangci-lint, lefthook) and git hooks.
 	lefthook install
 
 .PHONY: run
-run: ## Build and run nib.
+run: ## Build and run co-change.
 	$(GO) run .

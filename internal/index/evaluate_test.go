@@ -9,7 +9,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/history"
+	"github.com/nicovegasr/co-change/internal/history"
 )
 
 func TestScoreCountsEmptySlotsAgainstThePredictor(t *testing.T) {
@@ -135,18 +135,18 @@ func assertMatchesStrictAncestorQueries(t *testing.T, rank string) {
 	s, e, src, parents := evaluated(t, opts)
 
 	for _, c := range e.Cases {
-		nib, err := s.Coupled(context.Background(), c.Source, Options{MinSupport: 1, MaxFiles: opts.MaxFiles, Limit: 10, Rank: rank, HalfLifeDays: 1, Before: c.OID})
+		filtered, err := s.Coupled(context.Background(), c.Source, Options{MinSupport: 1, MaxFiles: opts.MaxFiles, Limit: 10, Rank: rank, HalfLifeDays: 1, Before: c.OID})
 		if err != nil {
 			t.Fatal(err)
 		}
-		cochange, err := s.Coupled(context.Background(), c.Source, Options{MinSupport: 1, MaxFiles: math.MaxInt, Limit: 10, Before: c.OID})
+		unfiltered, err := s.Coupled(context.Background(), c.Source, Options{MinSupport: 1, MaxFiles: math.MaxInt, Limit: 10, Before: c.OID})
 		if err != nil {
 			t.Fatal(err)
 		}
 		want := map[string][]string{
-			PredictorNib:       relationshipPaths(nib.Relationships),
-			PredictorCochange:  relationshipPaths(cochange.Relationships),
-			PredictorFrequency: bruteForceFrequency(src, parents, c.OID, c.Source, opts),
+			PredictorCoChange:   relationshipPaths(filtered.Relationships),
+			PredictorUnfiltered: relationshipPaths(unfiltered.Relationships),
+			PredictorFrequency:  bruteForceFrequency(src, parents, c.OID, c.Source, opts),
 		}
 		if !reflect.DeepEqual(c.Predictions, want) {
 			t.Errorf("%s/%s predictions %v, want %v", c.OID, c.Source, c.Predictions, want)

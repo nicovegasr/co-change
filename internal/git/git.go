@@ -1,4 +1,4 @@
-// Package git wraps the git CLI for the operations nib needs. It shells out to
+// Package git wraps the git CLI for the operations co-change needs. It shells out to
 // `git` rather than using a library to stay small and fast.
 package git
 
@@ -80,7 +80,7 @@ func Log(scope string, limit int) (string, error) {
 }
 
 // Root is the repository's top-level directory. `git status` paths are
-// relative to it, so nib runs from there whatever directory it starts in.
+// relative to it, so co-change runs from there whatever directory it starts in.
 func Root() (string, error) {
 	out, err := run("rev-parse", "--show-toplevel")
 	return strings.TrimSpace(out), err

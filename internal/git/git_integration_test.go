@@ -35,8 +35,8 @@ func newRepo(t *testing.T) {
 
 	for _, args := range [][]string{
 		{"init", "-q"},
-		{"config", "user.email", "test@nib.local"},
-		{"config", "user.name", "nib test"},
+		{"config", "user.email", "test@co-change.local"},
+		{"config", "user.name", "co-change test"},
 	} {
 		if out, err := exec.Command("git", args...).CombinedOutput(); err != nil {
 			t.Fatalf("git %v: %v\n%s", args, err, out)

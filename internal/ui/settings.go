@@ -8,7 +8,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/settings"
+	"github.com/nicovegasr/co-change/internal/settings"
 )
 
 const commandsButton = "/ comandos"
@@ -221,7 +221,7 @@ func (m Model) clickSettings(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 
 func (m Model) settingsView() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "  %s  %s\n\n", paint(green, bold.Render("nib")), paint(cyan, bold.Render("/settings")))
+	fmt.Fprintf(&b, "  %s  %s\n\n", paint(green, bold.Render("co-change")), paint(cyan, bold.Render("/settings")))
 	for i, r := range settingRows {
 		marker, label := " ", r.label
 		if i == m.settingsIdx {

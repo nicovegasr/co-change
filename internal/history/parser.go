@@ -22,7 +22,7 @@ func Parse(r io.Reader, visit func(Commit) error) error {
 		if token == "" {
 			continue
 		}
-		if token == "nib-commit" {
+		if token == "co-change-commit" {
 			if err := p.flush(visit); err != nil {
 				return err
 			}

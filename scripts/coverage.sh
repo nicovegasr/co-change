@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Per-package coverage gate for conventional-commit-tui domain packages.
+# Per-package coverage gate for co-change domain packages.
 #
 # Fails if ANY domain package falls below THRESHOLD%. Coverage is measured
 # per package (not globally) so a well-covered package can never mask a
@@ -15,6 +15,7 @@ THRESHOLD=${COVERAGE_THRESHOLD:-80}
 # and internal/cli are excluded: their logic is unit-tested, but most of their
 # code is the git/CLI adapter seam that integration tests cover (ADR-0006).
 DOMAIN_PKGS=(
+	./internal/archmap
 	./internal/commit
 	./internal/audit
 	./internal/stats

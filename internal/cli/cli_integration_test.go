@@ -14,8 +14,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/history"
-	"github.com/nicovegasr/conventional-commit-tui/internal/index"
+	"github.com/nicovegasr/co-change/internal/history"
+	"github.com/nicovegasr/co-change/internal/index"
 )
 
 func git(t *testing.T, dir string, args ...string) string {
@@ -123,7 +123,7 @@ func TestRealGitNibignoreFiltersCandidatesWithoutReindexing(t *testing.T) {
 	if len(before.Relationships) != 2 || before.Eligible != 2 {
 		t.Fatalf("unfiltered report = %+v", before)
 	}
-	write(t, dir, ".nibignore", "# generated dependency metadata\npackage-lock.json\n")
+	write(t, dir, ".cochangeignore", "# generated dependency metadata\npackage-lock.json\n")
 
 	var after index.Report
 	runJSON(t, dir, []string{"coupled", "A", "--min-support", "1", "--json"}, &after)
@@ -246,9 +246,9 @@ func TestRealGitEvaluateHoldsOutCommits(t *testing.T) {
 	if e.Sampled != 6 || len(e.Cases) != 5 || e.Skipped.NoSource != 1 {
 		t.Fatalf("%+v", e)
 	}
-	nib := e.Predictors[0]
-	if nib.Name != index.PredictorNib || nib.Metrics[0].Hits != 5 || nib.Metrics[0].Precision != 1 {
-		t.Fatalf("perfect co-change must be predicted at k=1: %+v", nib)
+	filtered := e.Predictors[0]
+	if filtered.Name != index.PredictorCoChange || filtered.Metrics[0].Hits != 5 || filtered.Metrics[0].Precision != 1 {
+		t.Fatalf("perfect co-change must be predicted at k=1: %+v", filtered)
 	}
 	var text bytes.Buffer
 	if err := Run(context.Background(), dir, []string{"evaluate", "--stride", "1"}, &text); err != nil || !strings.Contains(text.String(), "Cases: 5 of 6") {
@@ -288,5 +288,64 @@ func TestRealGitRelatedAfterRefresh(t *testing.T) {
 	git(t, dir, "commit", "-q", "--amend", "-m", "amended")
 	if err := Refresh(context.Background(), dir); err != nil {
 		t.Errorf("an amended HEAD must rebuild the derived index: %v", err)
+	}
+}
+
+func TestRealGitReviewSuggestsUntouchedCoChangesFromBeforeTheBranch(t *testing.T) {
+	dir := repo(t)
+	for i := range 4 {
+		write(t, dir, "api.go", strings.Repeat("v", i+1))
+		write(t, dir, "client.go", strings.Repeat("v", i+1))
+		commit(t, dir)
+	}
+	git(t, dir, "checkout", "-q", "-b", "feature")
+	for range 3 {
+		write(t, dir, "api.go", "feature"+git(t, dir, "rev-parse", "HEAD"))
+		write(t, dir, "docs.md", "feature"+git(t, dir, "rev-parse", "HEAD"))
+		commit(t, dir)
+	}
+
+	var r Review
+	runJSON(t, dir, []string{"review", "--base", "main", "--json"}, &r)
+
+	if !reflect.DeepEqual(r.Changed, []string{"api.go", "docs.md"}) {
+		t.Fatalf("changed %v", r.Changed)
+	}
+	// client.go co-changed with api.go on main; docs.md only within the
+	// branch, which must not confirm itself.
+	if len(r.Suggestions) != 1 || r.Suggestions[0].Path != "client.go" || r.Suggestions[0].Source != "api.go" {
+		t.Fatalf("suggestions %+v", r.Suggestions)
+	}
+	var md bytes.Buffer
+	if err := Run(context.Background(), dir, []string{"review", "--base", "main"}, &md); err != nil || !strings.Contains(md.String(), "`client.go`") {
+		t.Fatalf("%v\n%s", err, md.String())
+	}
+}
+
+func TestRealGitMapWritesThePageWithHiddenCoupling(t *testing.T) {
+	dir := repo(t)
+	write(t, dir, "go.mod", "module m\n")
+	if err := os.MkdirAll(filepath.Join(dir, "api"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "schema"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for i := range 5 {
+		write(t, dir, "api/a.go", "package api\n// "+strings.Repeat("v", i))
+		write(t, dir, "schema/s.go", "package schema\n// "+strings.Repeat("v", i))
+		commit(t, dir)
+	}
+	out := filepath.Join(t.TempDir(), "site")
+	var summary bytes.Buffer
+	if err := Run(context.Background(), dir, []string{"map", "--out", out}, &summary); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(summary.String(), "2 folders · 0 imports · 1 change together · 1 hidden couplings") {
+		t.Fatal(summary.String())
+	}
+	html, err := os.ReadFile(filepath.Join(out, "index.html"))
+	if err != nil || !strings.Contains(string(html), `"hidden":true`) {
+		t.Fatalf("%v", err)
 	}
 }

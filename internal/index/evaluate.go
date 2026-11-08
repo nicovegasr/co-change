@@ -11,7 +11,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/pathignore"
+	"github.com/nicovegasr/co-change/internal/pathignore"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -20,9 +20,9 @@ var Cutoffs = []int{1, 3, 5, 10}
 
 // Predictor names, in report order (ADR-0009).
 const (
-	PredictorNib       = "nib"
-	PredictorCochange  = "cochange"
-	PredictorFrequency = "frequency"
+	PredictorCoChange   = "co-change"
+	PredictorUnfiltered = "unfiltered"
+	PredictorFrequency  = "frequency"
 )
 
 // EvalOptions fixes the held-out sample before any result is seen. The
@@ -112,7 +112,7 @@ func (s *Store) Evaluate(ctx context.Context, opts EvalOptions) (Evaluation, err
 			return err
 		}
 		if m.Head == "" {
-			return errors.New("empty index; run nib index")
+			return errors.New("empty index; run co-change index")
 		}
 		e.Head = m.Head
 		sample, err := sampleCommits(ctx, tx, opts)
@@ -136,7 +136,7 @@ func (s *Store) Evaluate(ctx context.Context, opts EvalOptions) (Evaluation, err
 		}
 		return nil
 	})
-	for _, name := range []string{PredictorNib, PredictorCochange, PredictorFrequency} {
+	for _, name := range []string{PredictorCoChange, PredictorUnfiltered, PredictorFrequency} {
 		e.Predictors = append(e.Predictors, score(e.Cases, name, Cutoffs))
 	}
 	return e, err
@@ -272,7 +272,7 @@ func (h *trainingSet) predict(ctx context.Context, tx *bolt.Tx, source string, n
 	fid := bucket(tx, "files").Get([]byte(source))
 	unfiltered := Options{MinSupport: 1, MaxFiles: math.MaxInt, Limit: h.opts.Limit, Rank: RankShared, Ignore: h.opts.Ignore}
 	predictions := map[string][]string{}
-	for name, opts := range map[string]Options{PredictorNib: h.opts, PredictorCochange: unfiltered} {
+	for name, opts := range map[string]Options{PredictorCoChange: h.opts, PredictorUnfiltered: unfiltered} {
 		obs, err := observeSource(ctx, tx, fid, opts, h.ancestors, now)
 		if err != nil {
 			return nil, err

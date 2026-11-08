@@ -8,7 +8,7 @@ import (
 )
 
 func header(oid string) string {
-	return "\x00nib-commit\x00" + oid + "\x00\x00Alex\x00alex@example.test\x00123\x00feat: inventory\n\nDetails\n\x00\x00\n"
+	return "\x00co-change-commit\x00" + oid + "\x00\x00Alex\x00alex@example.test\x00123\x00feat: inventory\n\nDetails\n\x00\x00\n"
 }
 func TestParsePreservesPathsAndRenameStats(t *testing.T) {
 	oid := strings.Repeat("a", 64)
@@ -38,7 +38,7 @@ func TestParseEmptyCommitsAndCallbackFailure(t *testing.T) {
 func TestParseRejectsMalformedOrTruncatedHistory(t *testing.T) {
 	h := header(strings.Repeat("a", 40))
 	for _, stream := range []string{
-		"unterminated", "orphan\x00", "\x00nib-commit\x00", header("bad"),
+		"unterminated", "orphan\x00", "\x00co-change-commit\x00", header("bad"),
 		strings.Replace(h, "123", "invalid", 1),
 		h + ":bad\x00", h + ":100644 100644 a b M\x00", h + ":100644 100644 a b M\x00A\x00",
 		h + "1\t1\tA\x00", h + ":100644 100644 a b M\x00A\x00bad\x00",

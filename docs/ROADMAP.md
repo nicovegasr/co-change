@@ -1,17 +1,34 @@
-# nib — roadmap & design decisions
+# co-change — roadmap & design decisions
 
-## Current direction — repository history analysis
+## Current direction — CI pull-request impact review (ADR-0019)
 
-The product direction is temporal repository analysis: persistent history,
-historical relationships and evidence for change impact. The original TUI roadmap below is historical context, not the
-current implementation priority.
+`co-change` is a GitHub Action: on every pull request it comments with the
+untouched files that historically change with the ones the PR changes, each
+backed by evidence commits. Deterministic first, informational only.
 
-The first analytical slice implements `nib index [--rebuild]` and
-`nib coupled <file> [--json]`: local persistence, incremental DAG ingestion,
-file co-change, explicit eligibility filters and inspectable commit evidence.
-See ADR-0008 for semantics and limitations.
+- [x] **v0.1 — review + Action.** `co-change review --base <ref>`, composite
+  `action.yml`, sticky PR comment, dogfooded on this repository.
+- [x] **v0.2 — architecture map** (ADR-0020). `co-change map`, `map/action.yml`
+  and the reusable Pages workflow; imports for TS/JS, Go, Java/Kotlin, C#,
+  Python.
+- [ ] **Map: more languages and layer rules.** Rust, PHP, Ruby readers;
+  optional configured layers that flag imports against the direction (the
+  blog's violations).
+- [ ] **Validate the comment thresholds.** Measure `min-support 3` /
+  `min-ratio 0.3` with `evaluate` (precision of what the comment would show,
+  and how often it stays silent) on the benchmark repositories.
+- [ ] **Speed on large repositories.** Cache the index between runs
+  (`actions/cache` keyed by base) and ship prebuilt binaries instead of
+  building from source; needs ingestion measured first (milestone 2 below).
+- [ ] **Publish.** Tag `v1`, list the Action on the GitHub Marketplace.
+- [ ] **v2 — agent layer (opt-in).** An LLM, with the user's own API key,
+  explains the evidence in the PR's context; it never invents suggestions.
+- [ ] **Beyond files.** Ownership ("who usually reviews these files") and
+  symbol-level relationships, once their semantics are decided.
 
-Next milestones:
+## Analysis groundwork
+
+The analysis the review is built on (ADR-0008..0014):
 
 0. ~~Coupling in the commit TUI~~ — related-files panel over the git log,
    background index refresh and 2 s live reload (ADR-0014).
@@ -35,7 +52,7 @@ Next milestones:
 4. Expose validated evidence to agents and eventually PR workflows. Risk scores
    require an operational definition and historical validation first.
 
-## Original commit-TUI roadmap
+## Original commit-TUI roadmap (frozen)
 
 Decisions locked in a design session (2026-06-25). This file is the source of
 truth so a fresh Claude session (or you, in a month) doesn't re-debate them.
@@ -95,7 +112,7 @@ than the Source Control panel or lazygit/gitui (both tried, neither fit). It is
 - [x] **Phase 6 — `/stats`.** Commits by type plus an activity row, per day up
   to 30 days and per week beyond; window cycled in-screen. Authors and scopes
   later (ADR-0018).
-- [ ] **Phase 7 — release.** **Next.**
+- [ ] **Phase 7 — release.** Superseded by the CI focus (ADR-0019).
   `gh repo create nib-git`, push, tag `v0.1.0`,
   build/install instructions, maybe `brew`/`go install`.
 

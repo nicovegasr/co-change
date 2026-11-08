@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/history"
+	"github.com/nicovegasr/co-change/internal/history"
 )
 
 func benchmarkSource(count int) fakeSource {

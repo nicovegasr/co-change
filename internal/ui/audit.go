@@ -8,8 +8,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/audit"
-	"github.com/nicovegasr/conventional-commit-tui/internal/settings"
+	"github.com/nicovegasr/co-change/internal/audit"
+	"github.com/nicovegasr/co-change/internal/settings"
 )
 
 // Auditor is the narrow slice of the audit package the /audit screen needs.
@@ -110,7 +110,7 @@ func (m Model) auditView() string {
 	pathW := max(w-4-commitsCol-linesCol-signalCol, 12)
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "  %s  %s %s %s\n\n", paint(green, bold.Render("nib")), paint(cyan, bold.Render("/audit")),
+	fmt.Fprintf(&b, "  %s  %s %s %s\n\n", paint(green, bold.Render("co-change")), paint(cyan, bold.Render("/audit")),
 		paint(cyan, fmt.Sprintf("últimos %d días ▾", m.auditDays)), dim("· ordenado por commits"))
 	fmt.Fprintf(&b, "  %s%s%s  %s\n", dimStyle.Bold(true).Render(padRight("ARCHIVO", pathW)),
 		dimStyle.Bold(true).Render(fmt.Sprintf("%*s", commitsCol, "COMMITS")),

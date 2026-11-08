@@ -13,16 +13,32 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/history"
-	"github.com/nicovegasr/conventional-commit-tui/internal/index"
-	"github.com/nicovegasr/conventional-commit-tui/internal/pathignore"
+	"github.com/nicovegasr/co-change/internal/history"
+	"github.com/nicovegasr/co-change/internal/index"
+	"github.com/nicovegasr/co-change/internal/pathignore"
 )
 
 const usage = `Usage:
-  nib                                     Open the existing commit TUI
-  nib index [--rebuild] [--json]            Index history reachable from HEAD
-  nib coupled <file> [options]             Explain historical file co-change
-  nib evaluate [options]                   Score coupling on held-out commits
+  co-change review --base <ref> [options]  Untouched files that usually change with a PR
+  co-change map [--out DIR] [options]      Architecture map: imports and co-change (HTML)
+  co-change index [--rebuild] [--json]     Index history reachable from HEAD
+  co-change coupled <file> [options]       Explain historical file co-change
+  co-change evaluate [options]             Score coupling on held-out commits
+  co-change                                Open the commit TUI
+
+Review options (ADR-0019):
+  --base REF          Branch or commit the pull request targets (required)
+  --json              Emit JSON instead of the PR comment in Markdown
+  --min-support N     Minimum shared commits (default 3)
+  --min-ratio R       Minimum co-change ratio, 0..1 (default 0.3)
+  --limit N           Maximum suggestions (default 5)
+
+Map options (ADR-0020):
+  --out DIR           Folder to write index.html into (default co-change-map)
+  --repo-url URL      Repository URL for links (default from GitHub Actions)
+  --min-support N     Minimum shared commits between folders (default 5)
+  --min-ratio R       Minimum shared / mean commits of both, 0..1 (default 0.3)
+  --max-files N       Ignore commits changing more files (default 30)
 
 Coupled options:
   --json              Emit a machine-readable report
@@ -45,8 +61,8 @@ Evaluate options (ADR-0009, ADR-0012):
   --min-support, --max-files, --rank, --half-life   As in coupled
 
 Paths are relative to the repository root. Coupling is historical frequency,
-not dependency or a risk prediction. .nibignore filters related paths at query
-time; changing it does not require reindexing. Run nib index after HEAD changes.
+not dependency or a risk prediction. .cochangeignore filters related paths at query
+time; changing it does not require reindexing. Run co-change index after HEAD changes.
 `
 
 // Run dispatches analytical commands from dir. No command starts the TUI here.
@@ -64,8 +80,12 @@ func Run(ctx context.Context, dir string, args []string, out io.Writer) error {
 		return runCoupled(ctx, dir, args[1:], out)
 	case "evaluate":
 		return runEvaluate(ctx, dir, args[1:], out)
+	case "review":
+		return runReview(ctx, dir, args[1:], out)
+	case "map":
+		return runMap(ctx, dir, args[1:], out)
 	default:
-		return fmt.Errorf("unknown command %q; run nib --help", args[0])
+		return fmt.Errorf("unknown command %q; run co-change --help", args[0])
 	}
 }
 
@@ -77,7 +97,7 @@ func flags(name string, out io.Writer) *flag.FlagSet {
 }
 
 // parseArgs lets flags appear before or after positional arguments, so
-// `nib coupled --json a.go` and `nib coupled a.go --json` agree. Everything
+// `co-change coupled --json a.go` and `co-change coupled a.go --json` agree. Everything
 // after "--" is positional, for paths that start with a dash.
 func parseArgs(fs *flag.FlagSet, args []string) ([]string, error) {
 	var positional []string
@@ -132,7 +152,7 @@ func runIndex(ctx context.Context, dir string, args []string, out io.Writer) err
 		return helpError(err)
 	}
 	if fs.NArg() != 0 {
-		return errors.New("usage: nib index [--rebuild] [--json]")
+		return errors.New("usage: co-change index [--rebuild] [--json]")
 	}
 	repo, err := history.Open(ctx, dir)
 	if err != nil {
@@ -205,7 +225,7 @@ func runCoupled(ctx context.Context, dir string, args []string, out io.Writer) e
 		return helpError(err)
 	}
 	if len(positional) != 1 {
-		return errors.New("usage: nib coupled <repository-relative-file> [options]")
+		return errors.New("usage: co-change coupled <repository-relative-file> [options]")
 	}
 	file, err := repositoryPath(positional[0])
 	if err != nil {
@@ -249,7 +269,7 @@ func runEvaluate(ctx context.Context, dir string, args []string, out io.Writer) 
 		return helpError(err)
 	}
 	if len(positional) != 0 {
-		return errors.New("usage: nib evaluate [options]")
+		return errors.New("usage: co-change evaluate [options]")
 	}
 	if *extensions != "" {
 		opts.Extensions = strings.Split(*extensions, ",")
@@ -289,9 +309,9 @@ func query(ctx context.Context, repo history.Repository, file string, opts index
 }
 
 // withFreshIndex opens the index read-only, rejects a stale or foreign
-// snapshot and passes the current .nibignore rules to read.
+// snapshot and passes the current .cochangeignore rules to read.
 func withFreshIndex(repo history.Repository, read func(*index.Store, []string) error) error {
-	ignore, err := pathignore.Load(filepath.Join(repo.Root, ".nibignore"))
+	ignore, err := pathignore.Load(filepath.Join(repo.Root, ".cochangeignore"))
 	if err != nil {
 		return err
 	}
@@ -350,7 +370,7 @@ func renderEvaluation(out io.Writer, e index.Evaluation) error {
 			fmt.Fprintf(&b, "%-10s %4d %6d %6d %9.1f%% %7.1f%% %8.1f%%\n", p.Name, m.K, m.Hits, m.FalsePositives, m.Precision*100, m.Recall*100, m.Coverage*100)
 		}
 	}
-	b.WriteString("\nnib = coupled with filters · cochange = unfiltered co-change · frequency = global file frequency.\n")
+	b.WriteString("\nco-change = coupled with filters · unfiltered = plain co-change counting · frequency = global file frequency.\n")
 	b.WriteString("One repository's sample is evidence to report, not a general claim (ADR-0009).\n")
 	_, err := io.WriteString(out, b.String())
 	return err

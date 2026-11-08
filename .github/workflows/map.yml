@@ -1,0 +1,45 @@
+# Reusable workflow: publish the co-change architecture map to GitHub Pages.
+# Callers grant `pages: write` and `id-token: write`, and set Pages to
+# "GitHub Actions" in Settings → Pages (ADR-0020).
+name: co-change map
+
+on:
+  workflow_call:
+    inputs:
+      min-support:
+        type: string
+        default: '5'
+      min-ratio:
+        type: string
+        default: '0.3'
+      max-files:
+        type: string
+        default: '30'
+    outputs:
+      url:
+        description: URL of the published map.
+        value: ${{ jobs.publish.outputs.url }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: co-change-map
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: nicovegasr/co-change/map@main
+        with:
+          min-support: ${{ inputs.min-support }}
+          min-ratio: ${{ inputs.min-ratio }}
+          max-files: ${{ inputs.max-files }}
+      - uses: actions/configure-pages@v5
+      - id: deployment
+        uses: actions/deploy-pages@v4

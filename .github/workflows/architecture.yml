@@ -1,0 +1,15 @@
+name: Architecture map
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  map:
+    uses: ./.github/workflows/map.yml

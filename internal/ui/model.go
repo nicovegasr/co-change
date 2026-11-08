@@ -26,11 +26,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/audit"
-	"github.com/nicovegasr/conventional-commit-tui/internal/commit"
-	"github.com/nicovegasr/conventional-commit-tui/internal/git"
-	"github.com/nicovegasr/conventional-commit-tui/internal/settings"
-	"github.com/nicovegasr/conventional-commit-tui/internal/stats"
+	"github.com/nicovegasr/co-change/internal/audit"
+	"github.com/nicovegasr/co-change/internal/commit"
+	"github.com/nicovegasr/co-change/internal/git"
+	"github.com/nicovegasr/co-change/internal/settings"
+	"github.com/nicovegasr/co-change/internal/stats"
 )
 
 // Repo is the narrow slice of git the commit flow needs. main.go injects a real
@@ -68,7 +68,7 @@ type Related struct {
 }
 
 // ErrStaleHistory reports an index behind HEAD, e.g. after a commit made
-// outside nib.
+// outside co-change.
 var ErrStaleHistory = errors.New("history index is behind HEAD")
 
 // zone is the part of the UI currently driving the keyboard.
@@ -268,7 +268,7 @@ func (m Model) loadLog() tea.Cmd {
 }
 
 // poll schedules the next background reload, so edits, `git add` and commits
-// made outside nib show up without restarting it. Auto reload off: no tick.
+// made outside co-change show up without restarting it. Auto reload off: no tick.
 func (m Model) poll() tea.Cmd {
 	if m.prefs.ReloadSeconds == 0 {
 		return nil
@@ -309,7 +309,7 @@ func (m Model) statusLoaded(msg statusLoadedMsg) (Model, tea.Cmd) {
 	return m.queryRelated()
 }
 
-// logLoaded stores the log. A log that changed while nib was not committing
+// logLoaded stores the log. A log that changed while co-change was not committing
 // means a commit, checkout or rebase happened outside: the index catches up.
 func (m Model) logLoaded(msg logLoadedMsg) (Model, tea.Cmd) {
 	moved := msg.err == nil && m.logContent != "" && msg.content != m.logContent
@@ -351,7 +351,7 @@ func (m Model) queryRelated() (Model, tea.Cmd) {
 }
 
 // relatedLoaded stores the answer to the latest query. A stale index (a commit
-// made outside nib) is refreshed once and queried again.
+// made outside co-change) is refreshed once and queried again.
 func (m Model) relatedLoaded(msg relatedLoadedMsg) (Model, tea.Cmd) {
 	if msg.gen != m.relatedGen {
 		return m, nil
@@ -941,7 +941,7 @@ func (m Model) header() string {
 	if shown := m.layout().fileCount; shown < len(m.files) {
 		counts += fmt.Sprintf(" · viendo %d–%d", m.fileTop+1, m.fileTop+shown)
 	}
-	return fmt.Sprintf("  %s  %s %s", paint(green, bold.Render("nib")), dimStyle.Bold(true).Render("CAMBIOS"), dim(counts))
+	return fmt.Sprintf("  %s  %s %s", paint(green, bold.Render("co-change")), dimStyle.Bold(true).Render("CAMBIOS"), dim(counts))
 }
 
 func count(n int, one, many string) string {
@@ -1063,7 +1063,7 @@ func (m Model) rightLines(band, w int) []string {
 // View implements tea.Model. See docs/ux-mockups.html for the target layout.
 func (m Model) View() string {
 	if m.err != nil {
-		return "nib: " + m.err.Error() + "\n"
+		return "co-change: " + m.err.Error() + "\n"
 	}
 	switch {
 	case m.changesOpen:

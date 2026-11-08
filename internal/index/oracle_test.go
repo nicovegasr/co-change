@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/history"
+	"github.com/nicovegasr/co-change/internal/history"
 )
 
 // The oracle deliberately scans every commit instead of sharing the indexed

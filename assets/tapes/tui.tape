@@ -9,7 +9,7 @@ Type "source assets/tapes/setup.sh" Enter
 Sleep 4s
 Show
 
-Type "nib" Enter
+Type "co-change" Enter
 Sleep 2s
 Space
 Sleep 1.5s

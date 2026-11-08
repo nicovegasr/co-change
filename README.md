@@ -1,130 +1,73 @@
-# nib
+# co-change
 
 **English** · [Español](README.es.md)
 
-![CI](https://github.com/nicovegasr/conventional-commit-tui/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/nicovegasr/co-change/actions/workflows/ci.yml/badge.svg) · **[See this repository's architecture map →](https://nicovegasr.github.io/co-change/)**
 
-A terminal tool to write [Conventional Commits](https://www.conventionalcommits.org/) in one line and **not forget anything**: while you mark files, nib tells you which other files usually change with them, according to the repository's git history.
+A GitHub Action that tells you, on every pull request, **which files usually change with the ones you changed and were left untouched**, backed by the commits that prove it.
 
-Built to stay open in the VSCode terminal and commit on the fly.
+You changed the API but not its client. You touched the migration but not the model. Your repository's history already knows these files travel together; co-change reads it and leaves one comment on the PR:
 
-![nib: mark a file and its related files show up](assets/tui.gif)
+> **co-change** · files that usually change with this PR but are untouched:
+>
+> | File | Usually changes with | Co-change | Evidence |
+> |---|---|---|---|
+> | `CHANGELOG.md` | `main.go` | 90% (9 commits) | 614c265, 61d6cfa, ef02702 |
+> | `internal/audit/audit_test.go` | `internal/audit/audit.go` | 75% (3 commits) | 8b6387b, d85798c, d0cc3f0 |
+> | `go.sum` | `go.mod` | 75% (3 commits) | ee98508, a046d1a, cdac97a |
+>
+> <sub>Historical co-change before 521568b, not a dependency analysis.</sub>
 
----
-
-## What you get
-
-1. **One-line commits**: mark files → pick the type → type the message → `enter`. Mouse or keyboard.
-2. **Related files**: what usually changes with the files you marked, and which of those are modified but not marked (the classic forgotten test).
-3. **Analysis from the CLI**: `nib coupled <file>` explains what changes with a file, with percentages and the commits that back them.
-4. **Inside the TUI, one `/` away**: review every diff and jump to your editor (`/changes`), see your commits by type (`/stats`), find the files that change the most (`/audit`), switch the heavy parts off (`/settings`).
-5. **Measured, not promised**: `nib evaluate` checks on real commits whether the suggestions hit. Results below.
-
-Everything is local: nib only reads your repository through `git` and keeps its index inside `.git/`.
+No AI guessing, no configuration, no code leaves the runner: it is plain git history, and every row links to commits you can open.
 
 ---
 
-## Install
+## Use it
 
-Requires Go 1.26+ and git.
+```yaml
+# .github/workflows/co-change.yml
+name: co-change
+on: pull_request
 
-```bash
-git clone https://github.com/nicovegasr/conventional-commit-tui
-cd conventional-commit-tui
-make build                     # builds ./nib
-make install                   # installs nib into ~/go/bin (run it from any repo)
-cp nib ~/.local/bin/           # or any folder on your PATH
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0        # co-change needs the full history
+      - uses: nicovegasr/co-change@main
 ```
 
-Then, inside any repository:
-
-```bash
-nib
-```
-
----
-
-## The TUI — commit in one line
-
-| Action | Keyboard | Mouse |
+| Input | Default | Meaning |
 |---|---|---|
-| Mark / unmark a file | `space` | click the file |
-| Move through the list | `j` / `k` or arrows | — |
-| Pick the type (`feat`, `fix`, …) | `tab` + its initial | click `[ feat ▾ ]` |
-| Type the message and commit | type + `enter` | click the message |
-| Go back / quit | `esc` · `q` · `ctrl+c` | — |
+| `base` | the PR's base branch | Branch or commit the PR targets |
+| `min-support` | `3` | Minimum commits both files changed in together |
+| `min-ratio` | `0.3` | Minimum share of the changed file's commits that also touched the suggestion |
+| `limit` | `5` | Maximum suggestions |
+| `token` | `github.token` | Token allowed to comment |
 
-Below the commit line you see the exact subject that will be created (`→ feat: … .`), trailing period included. nib runs `git add` **only on the marked files**, never `git add .`.
-
-The session stays open after committing: the file list and the git log reload every 2 s, so editor changes, `git add` or commits made from another terminal show up on their own. Your marks are kept.
-
-### Related files
-
-When you mark files, the right column shows the five that most often change with them:
-
-- yellow `+`: **modified and not marked**. You are probably forgetting it.
-- grey `·`: usually changes with the marked files, but you have not touched it.
-- `↔` in the file list: the same hint, next to the file.
-
-The percentage is the share of the marked file's commits that also touched the other one. The index is created on first use (a few seconds in the background on a large repository) and kept up to date after every commit, checkout or rebase. If anything fails, the panel collapses to one grey line and you can still commit.
-
-Below 80 columns the right column hides, so it never gets in the way of the minimal flow.
+The review is also written to the job summary. Pull requests from forks get a read-only token, so they only get the summary.
 
 ---
 
-## Commands inside the TUI — `/`
+## How it works
 
-Type `/` on an empty message (or click `/ comandos`) to open the palette, type a few letters and press `enter`. `esc` takes you back to the commit view. You can run nib from any subdirectory of the repository.
+1. Indexes the repository's history inside the runner (`.git/co-change/`).
+2. Takes the files the PR changes since it branched off (the merge base).
+3. For each one, finds the files that changed with it **in the history before the merge base**, so the PR's own commits never confirm its suggestions.
+4. Keeps the untouched files that still exist and pass the noise filter, ranked with recent history weighing more (90-day half-life).
+5. Creates one comment and updates it on every push. If nothing is found it posts nothing, or updates its earlier comment to say so.
 
-### Review your changes — `/changes`
+It is **informational**: it never fails the check or blocks a merge.
 
-![/changes: the changed files and the selected diff](assets/changes.png)
+### Cut the noise — `.cochangeignore`
 
-The changed files on the left, the whole selected file on the right with additions in green and deletions in red. Built to review what an agent or a long session changed without opening an IDE.
-
-| Action | Keyboard | Mouse |
-|---|---|---|
-| Filter files by path | `/` and type | click the search box |
-| Change file / scroll the diff | `j` / `k` (`tab` switches pane) | click · wheel |
-| Next / previous change | `n` / `p` | the colored marks on the scrollbar |
-| Jump half a page | `ctrl+d` / `ctrl+u` | drag the scrollbar |
-| Mark the file for the commit | `space` | — |
-| Edit the file at that change | `e` | — |
-
-`e` hands the terminal to your editor, opened at the change you are looking at, and nib reloads the diff when you quit. The editor is `$VISUAL` or `$EDITOR` (e.g. `export EDITOR=vim` in your `.zshrc`), else `micro`, `nano` or `vi`. nib never edits files itself.
-
-### Your commits by type — `/stats`
-
-![/stats: commits by type and daily activity](assets/stats.png)
-
-The current branch's commits by conventional type and their activity: per day up to 30 days, per week beyond. `d` or a click on the title cycles 7 · 30 · 90 · 365 days. Subjects without a `type:` prefix count as `sin tipo` — GitHub's default squash title (`Feat/audit (#13)`) is the usual culprit, so give your PRs a conventional title.
-
-### Files that change the most — `/audit`
-
-![/audit: files ranked by number of commits](assets/audit.png)
-
-Files ranked by **how many commits touched them** (Adam Tornhill's hotspots); lines changed are context only. Files over the `/settings` threshold get `refactor?`, close to it `vigilar`. `d` cycles the window. Lockfiles and build output are skipped; add your own patterns to a `.auditignore` at the root, same format as `.nibignore`.
-
-### Switch things off — `/settings`
-
-The git-log panel, the related-files panel, mouse capture (off = native terminal selection and scroll), the log scope (current branch or all), the auto-reload interval and the `/audit` defaults. Changes apply live and are saved to `~/.config/nib/settings.toml`.
-
----
-
-## What usually changes with this file? — `nib coupled`
-
-![nib coupled in the terminal](assets/coupled.png)
-
-```bash
-nib index                                      # create or update the index
-nib coupled internal/ui/model.go               # related files, with evidence
-nib coupled internal/ui/model.go --json        # output for other tools
-nib coupled internal/ui/model.go --before v1.0 # only history before a commit
-```
-
-Each row says how many commits both files shared (`6/7`) and cites concrete commits you can open with `git show`. By default every co-change counts, mass commits (more than 50 files) are ignored and recent history weighs more (90-day half-life).
-
-To cut noise (lockfiles, changelogs, generated code), add a `.nibignore` at the root with one glob or directory per line. No reindexing needed:
+Lockfiles, changelogs or generated code may co-change with everything. Add a `.cochangeignore` at the root with one glob or directory per line:
 
 ```gitignore
 *.lock
@@ -135,13 +78,45 @@ dist/
 
 ---
 
-## Does it actually work? — `nib evaluate`
+## Architecture map
 
-`nib evaluate` hides past commits and asks nib, using **only the history before** each one, which other files changed. It compares against two baselines: plain co-change counting with no filters (`co-change`) and suggesting the repository's most-touched files (`frequency`).
+A second, reusable workflow publishes a map of your repository to GitHub Pages on every push to `main`: folders as boxes, the imports between them, and **the folders that change together with no import between them** (hidden coupling: shared data, a contract, a copy-paste).
+
+```yaml
+# .github/workflows/architecture.yml
+name: Architecture map
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  map:
+    uses: nicovegasr/co-change/.github/workflows/map.yml@main
+```
+
+Enable Pages once in *Settings → Pages → Source: GitHub Actions*. Then link the map from your README.
+
+- **Boxes** are folders with a `README.md` (its title and first paragraph describe the box). Code outside them is grouped by top-level folder, or by child of `src/`, `internal/`, `pkg/`…, so it works without any README.
+- **Imports** are read from TS/JS (with `tsconfig` aliases), Go, Java/Kotlin, C# and Python, with no compiler in CI. An import it cannot resolve is left out, never guessed.
+- **Change together** uses [code-maat](https://github.com/adamtornhill/code-maat)'s defaults: at least 5 shared commits, 30% of the mean commits of both folders, commits of at most 30 files.
+- Rows stack folders by import depth: what nothing imports on top, foundations at the bottom.
+
+Locally: `co-change map` writes `co-change-map/index.html`. The step alone, to publish elsewhere: `uses: nicovegasr/co-change/map@main` with `upload: false`.
+
+---
+
+## Does it actually work?
+
+`co-change evaluate` hides past commits and asks, using **only the history before** each one, which other files changed. It compares against two baselines: plain co-change counting with no filters (`unfiltered`) and suggesting the repository's most-touched files (`frequency`).
 
 Precision of the top 5 suggestions on each repository's most recent commits (parameters were tuned on older commits):
 
-| Repository | nib | co-change | frequency |
+| Repository | co-change | unfiltered | frequency |
 |---|---:|---:|---:|
 | fzf (Go) | **30.6%** | 23.9% | 18.0% |
 | Django (Python) | **13.1%** | 11.5% | 2.3% |
@@ -152,19 +127,51 @@ Precision of the top 5 suggestions on each repository's most recent commits (par
 | Personal blog (Astro) | 22.3% | **23.3%** | 11.6% |
 | mean of 7 repositories | **18.0%** | 17.3% | 6.1% |
 
-The honest reading: looking at **what changes with your file** hits about 3 times more often on average than looking at what changes most overall (from 1.7× on fzf to 10× on OkHttp). nib's filters add little over plain co-change on these small samples (24–52 cases per repository); on larger samples the advantage is about 2.5 points. Methodology and full numbers in [docs/research/file-coupling-benchmarks.md](docs/research/file-coupling-benchmarks.md).
+The honest reading: looking at **what changes with your file** hits about 3 times more often on average than looking at what changes most overall (from 1.7× on fzf to 10× on OkHttp). The filters add little over plain co-change on these small samples (24–52 cases per repository); on larger samples the advantage is about 2.5 points. These numbers measure ranking, not the PR comment: its thresholds (`min-support 3`, `min-ratio 0.3`) are a first choice to keep it quiet, not yet validated. Methodology in [docs/research/file-coupling-benchmarks.md](docs/research/file-coupling-benchmarks.md).
+
+---
+
+## Run it locally
+
+Requires Go 1.26+ and git.
 
 ```bash
-nib evaluate --prefix src/ --ext .ts,.tsx     # measure nib on your own repository
+git clone https://github.com/nicovegasr/co-change
+cd co-change
+make install                                   # installs co-change into ~/go/bin
 ```
+
+Then, inside any repository:
+
+```bash
+co-change review --base main                   # the PR comment for your branch
+co-change review --base main --json            # the same, for other tools
+co-change coupled internal/ui/model.go         # what changes with one file, with evidence
+co-change coupled src/app.ts --before v1.0     # only history before a commit
+co-change evaluate --prefix src/ --ext .ts     # measure it on your own repository
+co-change map                                  # the architecture map, in co-change-map/
+```
+
+`co-change` with no arguments opens a terminal commit tool (Conventional Commits in one line, with related files while you mark them); see [docs/tui.md](docs/tui.md).
 
 ---
 
 ## Limits
 
 - A file is a **path**: renames do not join their history.
-- Only history reachable from `HEAD`; shallow clones (`--depth`) are rejected.
+- Only history reachable from `HEAD`; shallow clones are rejected.
+- The Action builds co-change from source and indexes from scratch on every run (under a second on this repository; large repositories will take longer until caching lands).
 - Historical co-change is not dependency nor a bug prediction: it is a hint.
+
+---
+
+## Prior art and credits
+
+co-change builds on well-known research. What it adds is the packaging (a zero-setup CI step), the published measurements and crossing imports with co-change in the map.
+
+- **Logical coupling**: H. Gall, K. Hajek, M. Jazayeri, *Detection of Logical Coupling Based on Product Release History*, ICSM 1998. Files that change together are coupled, whatever the code says.
+- **"Programmers who changed this also changed…"**: T. Zimmermann, P. Weißgerber, S. Diehl, A. Zeller, *Mining Version Histories to Guide Software Changes*, ICSE 2004. The idea behind `co-change review`.
+- **Hotspots and temporal coupling for working developers**: Adam Tornhill, *Your Code as a Crime Scene* (Pragmatic Bookshelf, 2015) and *Software Design X-Rays* (2018). The architecture map borrows the defaults of his open-source [code-maat](https://github.com/adamtornhill/code-maat), and the commit TUI's `/audit` is inspired by his hotspots (change frequency only; his also weigh complexity). No code from code-maat is used.
 
 ---
 
@@ -172,9 +179,10 @@ nib evaluate --prefix src/ --ext .ts,.tsx     # measure nib on your own reposito
 
 | Document | Contents |
 |---|---|
-| [docs/architecture.md](docs/architecture.md) | Packages, flow and design rules |
-| [docs/adr/](docs/adr/) | Decisions, one per file (index, evaluation, related-files panel…) |
+| [docs/adr/](docs/adr/) | Decisions, one per file (ADR-0019: the CI focus, ADR-0020: the map) |
 | [docs/research/file-coupling-benchmarks.md](docs/research/file-coupling-benchmarks.md) | Benchmarks and evaluations on real repositories |
+| [docs/architecture.md](docs/architecture.md) | Packages, flow and design rules |
+| [docs/tui.md](docs/tui.md) | The commit TUI |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | What comes next |
 | [docs/contributing.md](docs/contributing.md) | How to work on the repository |
 
@@ -187,5 +195,3 @@ make check   # format, vet, lint and tests (pre-commit)
 make ci      # all of the above + ≥ 80% coverage + real git integration
 make bench   # index microbenchmarks
 ```
-
-The screenshots in this README are recorded with [vhs](https://github.com/charmbracelet/vhs) on a demo clone: `vhs assets/tapes/<name>.tape` (`tui`, `changes`, `stats`, `audit`, `coupled`).

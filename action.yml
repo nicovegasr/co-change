@@ -1,0 +1,76 @@
+name: co-change
+description: Comments on a pull request with untouched files that historically change together with the ones it changes.
+author: nicovegasr
+branding:
+  icon: git-pull-request
+  color: green
+
+inputs:
+  base:
+    description: Branch or commit the pull request targets. Defaults to the PR's base branch.
+    default: ''
+  min-support:
+    description: Minimum shared commits for a suggestion.
+    default: '3'
+  min-ratio:
+    description: Minimum co-change ratio for a suggestion, 0..1.
+    default: '0.3'
+  limit:
+    description: Maximum suggestions in the comment.
+    default: '5'
+  token:
+    description: Token allowed to comment on the pull request.
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: ${{ github.action_path }}/go.mod
+        cache-dependency-path: ${{ github.action_path }}/go.sum
+
+    - name: Build co-change
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: go build -o "$RUNNER_TEMP/co-change" .
+
+    - name: Review the pull request
+      shell: bash
+      env:
+        BASE: ${{ inputs.base || format('origin/{0}', github.base_ref) }}
+        MIN_SUPPORT: ${{ inputs.min-support }}
+        MIN_RATIO: ${{ inputs.min-ratio }}
+        LIMIT: ${{ inputs.limit }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      run: |
+        if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+          echo "::error::co-change needs the full history: use actions/checkout with fetch-depth: 0"
+          exit 1
+        fi
+        "$RUNNER_TEMP/co-change" review --base "$BASE" --min-support "$MIN_SUPPORT" \
+          --min-ratio "$MIN_RATIO" --limit "$LIMIT" > "$RUNNER_TEMP/co-change.md"
+        # The comment is edited in place on every push: say which push it reflects.
+        if [ -n "$HEAD_SHA" ]; then
+          printf '\n<sub>Updated for %s.</sub>\n' "${HEAD_SHA:0:7}" >> "$RUNNER_TEMP/co-change.md"
+        fi
+        cat "$RUNNER_TEMP/co-change.md" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Comment on the pull request
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        PR: ${{ github.event.pull_request.number }}
+      run: |
+        body="$RUNNER_TEMP/co-change.md"
+        if [ -z "$PR" ]; then
+          echo "Not a pull request event: the review is only in the job summary."
+          exit 0
+        fi
+        existing=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
+          --jq '.[] | select(.body | startswith("<!-- co-change -->")) | .id' | head -n 1)
+        if [ -n "$existing" ]; then
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" -F body=@"$body" > /dev/null
+        elif ! grep -q '<!-- co-change:empty -->' "$body"; then
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@"$body" > /dev/null
+        fi

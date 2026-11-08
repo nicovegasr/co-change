@@ -1,6 +1,6 @@
 // Package stats implements /stats: commits by conventional type and their
 // activity over a time window (ADR-0018). It is the same kind of view the
-// conventional-stats CLI produces, surfaced inside nib so you never leave the
+// conventional-stats CLI produces, surfaced inside co-change so you never leave the
 // tool.
 package stats
 
