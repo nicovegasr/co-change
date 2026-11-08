@@ -8,7 +8,7 @@ import (
 )
 
 func TestLoadIgnoresCommentsAndBlankLines(t *testing.T) {
-	file := filepath.Join(t.TempDir(), ".nibignore")
+	file := filepath.Join(t.TempDir(), ".cochangeignore")
 	if err := os.WriteFile(file, []byte("# generated files\n\n*.lock\ndist/\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -24,14 +24,14 @@ func TestLoadIgnoresCommentsAndBlankLines(t *testing.T) {
 }
 
 func TestLoadMissingFileReturnsNoPatterns(t *testing.T) {
-	got, err := Load(filepath.Join(t.TempDir(), ".nibignore"))
+	got, err := Load(filepath.Join(t.TempDir(), ".cochangeignore"))
 	if err != nil || len(got) != 0 {
 		t.Fatalf("Load() = %v, %v; want no patterns and no error", got, err)
 	}
 }
 
 func TestLoadRejectsMalformedGlob(t *testing.T) {
-	file := filepath.Join(t.TempDir(), ".nibignore")
+	file := filepath.Join(t.TempDir(), ".cochangeignore")
 	if err := os.WriteFile(file, []byte("[broken"), 0o600); err != nil {
 		t.Fatal(err)
 	}

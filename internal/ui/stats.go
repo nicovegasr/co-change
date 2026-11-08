@@ -10,8 +10,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/settings"
-	"github.com/nicovegasr/conventional-commit-tui/internal/stats"
+	"github.com/nicovegasr/co-change/internal/settings"
+	"github.com/nicovegasr/co-change/internal/stats"
 )
 
 // StatsReader is the narrow slice of the stats package the /stats screen needs.
@@ -101,7 +101,7 @@ func (m Model) statsView() string {
 	}
 	r := m.statsReport
 	var b strings.Builder
-	fmt.Fprintf(&b, "  %s  %s %s %s\n\n", paint(green, bold.Render("nib")), paint(cyan, bold.Render("/stats")),
+	fmt.Fprintf(&b, "  %s  %s %s %s\n\n", paint(green, bold.Render("co-change")), paint(cyan, bold.Render("/stats")),
 		paint(cyan, fmt.Sprintf("últimos %d días ▾", m.statsDays)), dim("· rama actual"))
 	switch {
 	case m.statsLoading:

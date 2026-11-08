@@ -66,7 +66,7 @@ func Open(ctx context.Context, dir string) (Repository, error) {
 }
 
 // IndexPath returns a worktree-local database path outside tracked files.
-func (r Repository) IndexPath() string { return filepath.Join(r.GitDir, "nib", "index.db") }
+func (r Repository) IndexPath() string { return filepath.Join(r.GitDir, "co-change", "index.db") }
 
 // Identity is stable across branch changes in this worktree.
 func (r Repository) Identity() string { return r.GitDir }
@@ -137,7 +137,7 @@ func (r Repository) walkBatch(ctx context.Context, oids []string, visit func(Com
 		"--no-show-signature", "--no-notes", "--no-use-mailmap", "--encoding=UTF-8",
 		"--no-ext-diff", "--no-textconv", "--no-color", "--no-abbrev",
 		"--no-diff-merges", "--raw", "--numstat", "-z", "--find-renames=50%",
-		"--format=%x00nib-commit%x00%H%x00%P%x00%an%x00%ae%x00%at%x00%B%x00",
+		"--format=%x00co-change-commit%x00%H%x00%P%x00%an%x00%ae%x00%at%x00%B%x00",
 	}
 	args = append(args, "--")
 	cmd := command(ctx, r.Root, args...)

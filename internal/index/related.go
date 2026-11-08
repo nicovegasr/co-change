@@ -8,7 +8,7 @@ import (
 
 // CoupledWithAny ranks the paths that co-changed with any source, keeping each
 // path's strongest relationship (ADR-0014). Sources without history or excluded
-// by .nibignore are skipped, and sources never appear in the result.
+// by .cochangeignore are skipped, and sources never appear in the result.
 func (s *Store) CoupledWithAny(ctx context.Context, sources []string, opts Options) ([]Relationship, error) {
 	if err := opts.Validate(); err != nil {
 		return nil, err

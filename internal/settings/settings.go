@@ -50,17 +50,17 @@ func Default() Settings {
 	}
 }
 
-// Path is where the settings live: $XDG_CONFIG_HOME/nib/settings.toml, else
-// ~/.config/nib/settings.toml.
+// Path is where the settings live: $XDG_CONFIG_HOME/co-change/settings.toml, else
+// ~/.config/co-change/settings.toml.
 func Path() (string, error) {
 	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
-		return filepath.Join(dir, "nib", "settings.toml"), nil
+		return filepath.Join(dir, "co-change", "settings.toml"), nil
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".config", "nib", "settings.toml"), nil
+	return filepath.Join(home, ".config", "co-change", "settings.toml"), nil
 }
 
 // Load reads path over Default(): a missing file or key keeps the default, and

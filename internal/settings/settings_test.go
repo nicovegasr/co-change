@@ -34,7 +34,7 @@ func TestLoadMissingFileIsDefault(t *testing.T) {
 }
 
 func TestSaveThenLoadRoundTrips(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "nib", "settings.toml") // parent created by Save
+	path := filepath.Join(t.TempDir(), "co-change", "settings.toml") // parent created by Save
 	want := Default()
 	want.ShowLog, want.MouseCapture, want.LogScope, want.ReloadSeconds = false, false, ScopeAll, 0
 
@@ -104,12 +104,12 @@ func TestNextCyclesThroughOff(t *testing.T) {
 
 func TestPathPrefersXDGConfigHome(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", "/xdg")
-	if p, _ := Path(); p != "/xdg/nib/settings.toml" {
+	if p, _ := Path(); p != "/xdg/co-change/settings.toml" {
 		t.Errorf("Path = %q", p)
 	}
 	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("HOME", "/home/nico")
-	if p, _ := Path(); p != "/home/nico/.config/nib/settings.toml" {
+	if p, _ := Path(); p != "/home/nico/.config/co-change/settings.toml" {
 		t.Errorf("Path = %q", p)
 	}
 }

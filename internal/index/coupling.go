@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/pathignore"
+	"github.com/nicovegasr/co-change/internal/pathignore"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -33,8 +33,8 @@ type Options struct {
 	Ignore       []string `json:"ignore_patterns,omitempty"`
 }
 
-// ErrIgnoredPath indicates that a query's source is excluded by .nibignore.
-var ErrIgnoredPath = errors.New("path is excluded by .nibignore")
+// ErrIgnoredPath indicates that a query's source is excluded by .cochangeignore.
+var ErrIgnoredPath = errors.New("path is excluded by .cochangeignore")
 
 // ErrNoHistory indicates a path the index has never seen.
 var ErrNoHistory = errors.New("path has no indexed history (paths are repository-relative; renames remain separate)")
@@ -125,7 +125,7 @@ func (s *Store) Coupled(ctx context.Context, path string, opts Options) (Report,
 			return err
 		}
 		if m.Head == "" {
-			return errors.New("empty index; run nib index")
+			return errors.New("empty index; run co-change index")
 		}
 		r.Head = m.Head
 		fid := bucket(tx, "files").Get([]byte(path))

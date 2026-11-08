@@ -1,5 +1,5 @@
 // Package editor picks the user's editor and opens a file at a line in it
-// (ADR-0017). nib never edits files itself.
+// (ADR-0017). co-change never edits files itself.
 package editor
 
 import (

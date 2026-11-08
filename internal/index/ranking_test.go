@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/history"
+	"github.com/nicovegasr/co-change/internal/history"
 )
 
 // linear indexes commits of the given paths, one per day, A always first.

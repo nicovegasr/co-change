@@ -12,7 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/git"
+	"github.com/nicovegasr/co-change/internal/git"
 )
 
 // Differ is the narrow slice of git the diff pane needs.
@@ -135,7 +135,7 @@ func (m Model) diffLoaded(msg diffLoadedMsg) Model {
 	return m.scrollDiff(0)
 }
 
-// reloadDiff follows edits made outside nib; a load in flight already will.
+// reloadDiff follows edits made outside co-change; a load in flight already will.
 func (m Model) reloadDiff() (Model, tea.Cmd) {
 	if !m.changesOpen || m.diffLoading {
 		return m, nil
@@ -398,7 +398,7 @@ func (m Model) changesView() string {
 	rows := m.changesRows()
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "  %s  %s %s\n\n", paint(green, bold.Render("nib")), paint(cyan, bold.Render("/changes")),
+	fmt.Fprintf(&b, "  %s  %s %s\n\n", paint(green, bold.Render("co-change")), paint(cyan, bold.Render("/changes")),
 		dim(count(len(m.files), "archivo cambiado", "archivos cambiados")))
 	fmt.Fprintf(&b, "%s %s %s\n", padRight(m.searchBox(leftW), leftW), paint(faint, "│"), m.diffHeader(rightW))
 	b.WriteString(paint(faint, strings.Repeat("─", leftW+1)+"┼"+strings.Repeat("─", max(rightW+1, 0))) + "\n")

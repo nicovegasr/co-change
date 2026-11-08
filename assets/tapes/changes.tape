@@ -11,7 +11,7 @@ Type `sed -i.bak 's/const weeklyBeyond = 30/const weeklyBeyond = 31/; s|// weekl
 Sleep 1s
 Show
 
-Type "nib" Enter
+Type "co-change" Enter
 Sleep 2s
 Type "/ch"
 Sleep 800ms

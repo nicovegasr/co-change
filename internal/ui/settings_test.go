@@ -8,8 +8,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/git"
-	"github.com/nicovegasr/conventional-commit-tui/internal/settings"
+	"github.com/nicovegasr/co-change/internal/git"
+	"github.com/nicovegasr/co-change/internal/settings"
 )
 
 // fakeStore serves prefs (Default() when unset) and records saves.
@@ -113,7 +113,7 @@ func TestSettingsEscReturnsWithoutQuitting(t *testing.T) {
 	m = openSettings(t, m)
 	m, cmd := send(m, "q")
 	if m.settingsOpen || cmd != nil {
-		t.Error("q leaves /settings instead of quitting nib")
+		t.Error("q leaves /settings instead of quitting co-change")
 	}
 }
 

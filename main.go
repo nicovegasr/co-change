@@ -1,4 +1,4 @@
-// Command nib is a fast, terminal-first commit tool (conventional commits TUI).
+// Command co-change is a fast, terminal-first commit tool (conventional commits TUI).
 //
 // Run with no arguments to open the commit flow. Slash-commands
 // (/changes, /stats, /audit, /settings) drive the heavier features. See docs/ux-mockups.html for the
@@ -17,14 +17,14 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/audit"
-	"github.com/nicovegasr/conventional-commit-tui/internal/cli"
-	"github.com/nicovegasr/conventional-commit-tui/internal/editor"
-	"github.com/nicovegasr/conventional-commit-tui/internal/git"
-	"github.com/nicovegasr/conventional-commit-tui/internal/index"
-	"github.com/nicovegasr/conventional-commit-tui/internal/settings"
-	"github.com/nicovegasr/conventional-commit-tui/internal/stats"
-	"github.com/nicovegasr/conventional-commit-tui/internal/ui"
+	"github.com/nicovegasr/co-change/internal/audit"
+	"github.com/nicovegasr/co-change/internal/cli"
+	"github.com/nicovegasr/co-change/internal/editor"
+	"github.com/nicovegasr/co-change/internal/git"
+	"github.com/nicovegasr/co-change/internal/index"
+	"github.com/nicovegasr/co-change/internal/settings"
+	"github.com/nicovegasr/co-change/internal/stats"
+	"github.com/nicovegasr/co-change/internal/ui"
 )
 
 // gitRepo adapts the git package to the ui.Repo port injected into the model.
@@ -110,19 +110,19 @@ func main() {
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		defer stop()
 		if err := cli.Run(ctx, ".", os.Args[1:], os.Stdout); err != nil {
-			fmt.Fprintln(os.Stderr, "nib:", err)
+			fmt.Fprintln(os.Stderr, "co-change:", err)
 			os.Exit(1)
 		}
 		return
 	}
 	if err := moveToRepoRoot(); err != nil {
-		fmt.Fprintln(os.Stderr, "nib:", err)
+		fmt.Fprintln(os.Stderr, "co-change:", err)
 		os.Exit(1)
 	}
 	model := ui.New(gitRepo{}, gitLogger{}, indexHistory{ctx: context.Background()}, fileStore{}, gitAudit{}, gitStats{}, gitDiffer{}, userEditor{})
 	p := tea.NewProgram(model, tea.WithAltScreen()) // the model enables the mouse from its settings
 	if _, err := p.Run(); err != nil {
-		fmt.Fprintln(os.Stderr, "nib:", err)
+		fmt.Fprintln(os.Stderr, "co-change:", err)
 		os.Exit(1)
 	}
 }

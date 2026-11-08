@@ -7,7 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/git"
+	"github.com/nicovegasr/co-change/internal/git"
 )
 
 // fakeDiffer answers every file with diffs[path] and records the last one.

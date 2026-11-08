@@ -14,8 +14,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nicovegasr/conventional-commit-tui/internal/history"
-	"github.com/nicovegasr/conventional-commit-tui/internal/index"
+	"github.com/nicovegasr/co-change/internal/history"
+	"github.com/nicovegasr/co-change/internal/index"
 )
 
 func git(t *testing.T, dir string, args ...string) string {
@@ -123,7 +123,7 @@ func TestRealGitNibignoreFiltersCandidatesWithoutReindexing(t *testing.T) {
 	if len(before.Relationships) != 2 || before.Eligible != 2 {
 		t.Fatalf("unfiltered report = %+v", before)
 	}
-	write(t, dir, ".nibignore", "# generated dependency metadata\npackage-lock.json\n")
+	write(t, dir, ".cochangeignore", "# generated dependency metadata\npackage-lock.json\n")
 
 	var after index.Report
 	runJSON(t, dir, []string{"coupled", "A", "--min-support", "1", "--json"}, &after)
@@ -246,9 +246,9 @@ func TestRealGitEvaluateHoldsOutCommits(t *testing.T) {
 	if e.Sampled != 6 || len(e.Cases) != 5 || e.Skipped.NoSource != 1 {
 		t.Fatalf("%+v", e)
 	}
-	nib := e.Predictors[0]
-	if nib.Name != index.PredictorNib || nib.Metrics[0].Hits != 5 || nib.Metrics[0].Precision != 1 {
-		t.Fatalf("perfect co-change must be predicted at k=1: %+v", nib)
+	filtered := e.Predictors[0]
+	if filtered.Name != index.PredictorCoChange || filtered.Metrics[0].Hits != 5 || filtered.Metrics[0].Precision != 1 {
+		t.Fatalf("perfect co-change must be predicted at k=1: %+v", filtered)
 	}
 	var text bytes.Buffer
 	if err := Run(context.Background(), dir, []string{"evaluate", "--stride", "1"}, &text); err != nil || !strings.Contains(text.String(), "Cases: 5 of 6") {
