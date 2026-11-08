@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"strings"
 
 	"github.com/nicovegasr/co-change/internal/history"
@@ -25,6 +26,7 @@ type Review struct {
 	MergeBase   string               `json:"merge_base"`
 	Changed     []string             `json:"changed_files"`
 	Suggestions []index.Relationship `json:"suggestions"`
+	Repository  string               `json:"-"` // links commits in the comment
 }
 
 // reviewFilter keeps a PR comment from crying wolf. Its defaults were chosen
@@ -60,6 +62,7 @@ func runReview(ctx context.Context, dir string, args []string, out io.Writer) er
 	if err != nil {
 		return err
 	}
+	review.Repository = githubRepositoryURL()
 	if *asJSON {
 		return json.NewEncoder(out).Encode(review)
 	}
@@ -109,22 +112,48 @@ func suggest(related []index.Relationship, tracked map[string]bool, f reviewFilt
 	return kept
 }
 
+// strongRatio marks the suggestions that almost always travel together.
+const strongRatio = 0.75
+
 func reviewMarkdown(r Review) string {
 	var b strings.Builder
 	b.WriteString(reviewMarker + "\n")
 	if len(r.Suggestions) == 0 {
-		fmt.Fprintf(&b, "%s\n**co-change** · nothing found: no untouched file usually changes with the %d changed in this PR.\n", emptyMarker, len(r.Changed))
+		fmt.Fprintf(&b, "%s\n### ✨ co-change · all good!\n\nNothing that usually travels with these %s is missing.\n", emptyMarker, plural(len(r.Changed), "file"))
 		return b.String()
 	}
-	b.WriteString("**co-change** · files that usually change with this PR but are untouched:\n\n")
-	b.WriteString("| File | Usually changes with | Co-change | Evidence |\n|---|---|---|---|\n")
+	b.WriteString("### 🧳 co-change · files that usually travel together\n\n")
+	fmt.Fprintf(&b, "This PR changes **%s**. In this repo's history, these usually change with them, and they're missing here:\n\n", plural(len(r.Changed), "file"))
+	b.WriteString("| | File | Usually changes with | How often | Proof |\n|---|---|---|---|---|\n")
 	for _, s := range r.Suggestions {
-		oids := make([]string, len(s.Evidence))
-		for i, e := range s.Evidence {
-			oids[i] = e.OID[:min(len(e.OID), 7)]
+		mood := "👀"
+		if s.Ratio >= strongRatio {
+			mood = "🔥"
 		}
-		fmt.Fprintf(&b, "| `%s` | `%s` | %.0f%% (%d commits) | %s |\n", s.Path, s.Source, s.Ratio*100, s.Shared, strings.Join(oids, ", "))
+		proof := make([]string, len(s.Evidence))
+		for i, e := range s.Evidence {
+			proof[i] = r.commit(e.OID)
+		}
+		fmt.Fprintf(&b, "| %s | `%s` | `%s` | **%d of %d** times | %s |\n", mood, s.Path, s.Source, s.Shared, int(math.Round(float64(s.Shared)/s.Ratio)), strings.Join(proof, " · "))
 	}
-	fmt.Fprintf(&b, "\n<sub>Historical co-change before %s, not a dependency analysis. Exclude paths with <code>.cochangeignore</code>.</sub>\n", r.MergeBase[:min(len(r.MergeBase), 7)])
+	b.WriteString("\n💡 Just history, not a rule: if they don't need changes, ignore me. Too noisy? Add paths to `.cochangeignore`.\n\n")
+	fmt.Fprintf(&b, "<sub>🕰️ History before `%s` · [co-change](https://github.com/nicovegasr/co-change)</sub>\n", short(r.MergeBase))
 	return b.String()
+}
+
+// commit links an OID to the repository when it is known (in GitHub Actions).
+func (r Review) commit(oid string) string {
+	if r.Repository == "" {
+		return "`" + short(oid) + "`"
+	}
+	return fmt.Sprintf("[%s](%s/commit/%s)", short(oid), r.Repository, oid)
+}
+
+func short(oid string) string { return oid[:min(len(oid), 7)] }
+
+func plural(n int, noun string) string {
+	if n == 1 {
+		return "1 " + noun
+	}
+	return fmt.Sprintf("%d %ss", n, noun)
 }

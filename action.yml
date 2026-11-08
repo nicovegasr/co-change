@@ -52,7 +52,7 @@ runs:
           --min-ratio "$MIN_RATIO" --limit "$LIMIT" > "$RUNNER_TEMP/co-change.md"
         # The comment is edited in place on every push: say which push it reflects.
         if [ -n "$HEAD_SHA" ]; then
-          printf '\n<sub>Updated for %s.</sub>\n' "${HEAD_SHA:0:7}" >> "$RUNNER_TEMP/co-change.md"
+          printf '<sub>🔄 Updated for %s</sub>\n' "${HEAD_SHA:0:7}" >> "$RUNNER_TEMP/co-change.md"
         fi
         cat "$RUNNER_TEMP/co-change.md" >> "$GITHUB_STEP_SUMMARY"
 
