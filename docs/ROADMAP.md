@@ -14,9 +14,9 @@ backed by evidence commits. Deterministic first, informational only.
 - [ ] **Map: more languages and layer rules.** Rust, PHP, Ruby readers;
   optional configured layers that flag imports against the direction (the
   blog's violations).
-- [ ] **Validate the comment thresholds.** Measure `min-support 3` /
-  `min-ratio 0.3` with `evaluate` (precision of what the comment would show,
-  and how often it stays silent) on the benchmark repositories.
+- [x] **Validate the comment thresholds** (ADR-0021): 5 shared commits and
+  a 0.5 ratio replace the guessed 3 / 0.3 (34.9% of shown suggestions right
+  on validation, speaks on 28% of single-file cases).
 - [ ] **Speed on large repositories.** Cache the index between runs
   (`actions/cache` keyed by base) and ship prebuilt binaries instead of
   building from source; needs ingestion measured first (milestone 2 below).
