@@ -2,7 +2,7 @@
 
 [English](README.md) · **Español**
 
-![CI](https://github.com/nicovegasr/co-change/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/nicovegasr/co-change/actions/workflows/ci.yml/badge.svg) · **[Ver el mapa de arquitectura de este repo →](https://nicovegasr.github.io/co-change/)**
 
 Una GitHub Action que te dice, en cada pull request, **qué archivos suelen cambiar con los que has cambiado y se han quedado sin tocar**, con los commits que lo demuestran.
 
@@ -78,6 +78,38 @@ dist/
 
 ---
 
+## Mapa de arquitectura
+
+Un segundo workflow reutilizable publica en GitHub Pages un mapa de tu repo en cada push a `main`: las carpetas como cajas, los imports entre ellas y **las carpetas que cambian juntas sin ningún import entre ellas** (acoplamiento oculto: datos compartidos, un contrato, un copia-pega).
+
+```yaml
+# .github/workflows/architecture.yml
+name: Architecture map
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  map:
+    uses: nicovegasr/co-change/.github/workflows/map.yml@main
+```
+
+Activa Pages una vez en *Settings → Pages → Source: GitHub Actions*. Después enlaza el mapa desde tu README.
+
+- **Las cajas** son carpetas con `README.md` (su título y primer párrafo describen la caja). El código fuera de ellas se agrupa por carpeta de primer nivel, o por hija de `src/`, `internal/`, `pkg/`…, así que funciona sin ningún README.
+- **Los imports** se leen de TS/JS (con alias de `tsconfig`), Go, Java/Kotlin, C# y Python, sin compilador en el CI. Un import que no sabe resolver se queda fuera, nunca se adivina.
+- **Cambian juntas** usa los valores por defecto de [code-maat](https://github.com/adamtornhill/code-maat): al menos 5 commits compartidos, el 30% de la media de commits de ambas carpetas, commits de como mucho 30 archivos.
+- Las filas apilan las carpetas por profundidad de imports: arriba lo que nadie importa, abajo los cimientos.
+
+En local: `co-change map` escribe `co-change-map/index.html`. Solo el paso, para publicarlo en otro sitio: `uses: nicovegasr/co-change/map@main` con `upload: false`.
+
+---
+
 ## ¿Funciona de verdad?
 
 `co-change evaluate` esconde commits del pasado y pregunta, usando **solo la historia anterior** a cada uno, qué otros archivos cambiaron. Compara con dos referencias: contar sin filtros qué cambió junto (`unfiltered`) y sugerir los archivos más tocados del repo (`frequency`).
@@ -117,6 +149,7 @@ co-change review --base main --json            # lo mismo, para otras herramient
 co-change coupled internal/ui/model.go         # qué cambia con un archivo, con evidencia
 co-change coupled src/app.ts --before v1.0     # solo la historia anterior a un commit
 co-change evaluate --prefix src/ --ext .ts     # mídelo en tu propio repo
+co-change map                                  # el mapa de arquitectura, en co-change-map/
 ```
 
 `co-change` sin argumentos abre una herramienta de commits en la terminal (Conventional Commits en una línea, con los archivos relacionados mientras marcas); mira [docs/tui.es.md](docs/tui.es.md).
@@ -136,7 +169,7 @@ co-change evaluate --prefix src/ --ext .ts     # mídelo en tu propio repo
 
 | Documento | Contenido |
 |---|---|
-| [docs/adr/](docs/adr/) | Las decisiones, una por archivo (ADR-0019: el enfoque de CI) |
+| [docs/adr/](docs/adr/) | Las decisiones, una por archivo (ADR-0019: el enfoque de CI, ADR-0020: el mapa) |
 | [docs/research/file-coupling-benchmarks.md](docs/research/file-coupling-benchmarks.md) | Benchmarks y evaluaciones en repos reales |
 | [docs/architecture.md](docs/architecture.md) | Paquetes, flujo y reglas de diseño |
 | [docs/tui.es.md](docs/tui.es.md) | El TUI de commits |

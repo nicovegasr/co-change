@@ -31,6 +31,12 @@ later goal — ADR-0004.)
   evidence commits; Markdown for the PR comment or `--json` (ADR-0019).
 - A composite GitHub Action (`action.yml`) that runs the review and keeps one
   comment on the pull request up to date; this repository runs it on itself.
+- `co-change map`: a self-contained HTML architecture map. Folders with a
+  README (or top-level/container folders) as boxes, imports read from TS/JS,
+  Go, Java/Kotlin, C# and Python, and unit co-change with code-maat's
+  defaults; co-change without an import is flagged as hidden coupling
+  (ADR-0020). `map/action.yml` builds it as a Pages artifact and the reusable
+  workflow `.github/workflows/map.yml` publishes it; this repository does.
 
 - `/stats` in the command palette: commits of the current branch by
   conventional type (bars, count and share, `sin tipo` for subjects without a

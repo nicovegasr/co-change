@@ -8,6 +8,12 @@ backed by evidence commits. Deterministic first, informational only.
 
 - [x] **v0.1 — review + Action.** `co-change review --base <ref>`, composite
   `action.yml`, sticky PR comment, dogfooded on this repository.
+- [x] **v0.2 — architecture map** (ADR-0020). `co-change map`, `map/action.yml`
+  and the reusable Pages workflow; imports for TS/JS, Go, Java/Kotlin, C#,
+  Python.
+- [ ] **Map: more languages and layer rules.** Rust, PHP, Ruby readers;
+  optional configured layers that flag imports against the direction (the
+  blog's violations).
 - [ ] **Validate the comment thresholds.** Measure `min-support 3` /
   `min-ratio 0.3` with `evaluate` (precision of what the comment would show,
   and how often it stays silent) on the benchmark repositories.

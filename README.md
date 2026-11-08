@@ -2,7 +2,7 @@
 
 **English** · [Español](README.es.md)
 
-![CI](https://github.com/nicovegasr/co-change/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/nicovegasr/co-change/actions/workflows/ci.yml/badge.svg) · **[See this repository's architecture map →](https://nicovegasr.github.io/co-change/)**
 
 A GitHub Action that tells you, on every pull request, **which files usually change with the ones you changed and were left untouched**, backed by the commits that prove it.
 
@@ -78,6 +78,38 @@ dist/
 
 ---
 
+## Architecture map
+
+A second, reusable workflow publishes a map of your repository to GitHub Pages on every push to `main`: folders as boxes, the imports between them, and **the folders that change together with no import between them** (hidden coupling: shared data, a contract, a copy-paste).
+
+```yaml
+# .github/workflows/architecture.yml
+name: Architecture map
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  map:
+    uses: nicovegasr/co-change/.github/workflows/map.yml@main
+```
+
+Enable Pages once in *Settings → Pages → Source: GitHub Actions*. Then link the map from your README.
+
+- **Boxes** are folders with a `README.md` (its title and first paragraph describe the box). Code outside them is grouped by top-level folder, or by child of `src/`, `internal/`, `pkg/`…, so it works without any README.
+- **Imports** are read from TS/JS (with `tsconfig` aliases), Go, Java/Kotlin, C# and Python, with no compiler in CI. An import it cannot resolve is left out, never guessed.
+- **Change together** uses [code-maat](https://github.com/adamtornhill/code-maat)'s defaults: at least 5 shared commits, 30% of the mean commits of both folders, commits of at most 30 files.
+- Rows stack folders by import depth: what nothing imports on top, foundations at the bottom.
+
+Locally: `co-change map` writes `co-change-map/index.html`. The step alone, to publish elsewhere: `uses: nicovegasr/co-change/map@main` with `upload: false`.
+
+---
+
 ## Does it actually work?
 
 `co-change evaluate` hides past commits and asks, using **only the history before** each one, which other files changed. It compares against two baselines: plain co-change counting with no filters (`unfiltered`) and suggesting the repository's most-touched files (`frequency`).
@@ -117,6 +149,7 @@ co-change review --base main --json            # the same, for other tools
 co-change coupled internal/ui/model.go         # what changes with one file, with evidence
 co-change coupled src/app.ts --before v1.0     # only history before a commit
 co-change evaluate --prefix src/ --ext .ts     # measure it on your own repository
+co-change map                                  # the architecture map, in co-change-map/
 ```
 
 `co-change` with no arguments opens a terminal commit tool (Conventional Commits in one line, with related files while you mark them); see [docs/tui.md](docs/tui.md).
@@ -136,7 +169,7 @@ co-change evaluate --prefix src/ --ext .ts     # measure it on your own reposito
 
 | Document | Contents |
 |---|---|
-| [docs/adr/](docs/adr/) | Decisions, one per file (ADR-0019: the CI focus) |
+| [docs/adr/](docs/adr/) | Decisions, one per file (ADR-0019: the CI focus, ADR-0020: the map) |
 | [docs/research/file-coupling-benchmarks.md](docs/research/file-coupling-benchmarks.md) | Benchmarks and evaluations on real repositories |
 | [docs/architecture.md](docs/architecture.md) | Packages, flow and design rules |
 | [docs/tui.md](docs/tui.md) | The commit TUI |

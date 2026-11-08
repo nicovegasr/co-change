@@ -5,6 +5,10 @@
 untouched files that historically change with the ones it changes, backed by
 evidence commits (ADR-0019). Deterministic first; an LLM layer is v2.
 
+It also publishes an **architecture map** (`co-change map`, ADR-0020): folders,
+their imports (TS/JS, Go, Java/Kotlin, C#, Python text readers) and the
+co-changes no import explains (hidden coupling), as a GitHub Pages site.
+
 The original commit TUI (`co-change` with no arguments) still ships but is
 **frozen**: no new features. Its design docs are `docs/tui.md`,
 `docs/ux-mockups.html` and the "Original commit-TUI roadmap" in
@@ -29,8 +33,11 @@ targets (see `docs/contributing.md`, ADR-0003). Do not invent ad-hoc commands.
 
 ```
 action.yml            composite GitHub Action: build, review, one sticky PR comment
+map/action.yml        composite action: architecture map → Pages artifact (ADR-0020)
+.github/workflows/map.yml   reusable workflow publishing the map to GitHub Pages
 main.go               entrypoint: CLI subcommands, or the TUI with no arguments
-internal/cli          index / coupled / evaluate / review (review.go: ADR-0019)
+internal/cli          index / coupled / evaluate / review / map (ADR-0019, ADR-0020)
+internal/archmap      units, per-language import readers, unit co-change, page.html
 internal/history      git history reader (merge base, changed and tracked files)
 internal/index        bbolt index, co-change ranking, held-out evaluation
 internal/pathignore   .cochangeignore / .auditignore patterns
@@ -45,7 +52,7 @@ narrow injected interfaces (ADR-0005). See `docs/architecture.md`.
 
 - **TDD, pragmatic** (ADR-0002): logic written test-first (parsing, ranking,
   `Format`, model `Update→state`); raw render + git shell-out are not.
-- **Coverage ≥80% per domain package** (`commit, audit, stats, git, settings, index, pathignore, editor`);
+- **Coverage ≥80% per domain package** (`archmap, commit, audit, stats, git, settings, index, pathignore, editor`);
   `internal/ui` requires 0%. Gate: `make cover`.
 - **Branch + PR**, never commit to `main`; CI (`make ci`) is the gate (ADR-0004).
 - **Non-obvious design decision → write an ADR first** (`docs/adr/`, copy
