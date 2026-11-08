@@ -1,0 +1,3 @@
+# Files that change with everything: noise for co-change suggestions.
+CHANGELOG.md
+go.sum
