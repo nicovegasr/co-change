@@ -8,17 +8,20 @@ Una GitHub Action que te dice, en cada pull request, **qué archivos suelen camb
 
 Cambiaste la API pero no su cliente. Tocaste la migración pero no el modelo. La historia de tu repo ya sabe que esos archivos viajan juntos; co-change la lee y deja un único comentario en el PR:
 
-> **co-change** · files that usually change with this PR but are untouched:
+> ### 🧳 co-change · files that usually travel together
 >
-> | File | Usually changes with | Co-change | Evidence |
-> |---|---|---|---|
-> | `CHANGELOG.md` | `main.go` | 90% (9 commits) | 614c265, 61d6cfa, ef02702 |
-> | `internal/audit/audit_test.go` | `internal/audit/audit.go` | 75% (3 commits) | 8b6387b, d85798c, d0cc3f0 |
-> | `go.sum` | `go.mod` | 75% (3 commits) | ee98508, a046d1a, cdac97a |
+> This PR changes **4 files**. In this repo's history, these usually change with them, and they're missing here:
 >
-> <sub>Historical co-change before 521568b, not a dependency analysis.</sub>
+> | | File | Usually changes with | How often | Proof |
+> |---|---|---|---|---|
+> | 🔥 | `docs/handoff.md` | `docs/ROADMAP.md` | **9 of 12** times | 61d6cfa · 8b6387b · ee98508 |
+> | 👀 | `internal/ui/settings.go` | `CHANGELOG.md` | **5 of 12** times | 614c265 · 61d6cfa · 784cda0 |
+>
+> 💡 Just history, not a rule: if they don't need changes, ignore me. Too noisy? Add paths to `.cochangeignore`.
+>
+> <sub>🕰️ History before `eedd8f3` · 🔄 updated for `2a86914`</sub>
 
-Sin IA adivinando, sin configuración y sin que el código salga del runner: es historia de git pura, y cada fila enlaza a commits que puedes abrir.
+🔥 significa que casi siempre viajan juntos (75% o más), 👀 que lo hacen a menudo. Sin IA adivinando, sin configuración y sin que el código salga del runner: es historia de git pura, y cada fila enlaza a los commits que lo demuestran.
 
 ---
 

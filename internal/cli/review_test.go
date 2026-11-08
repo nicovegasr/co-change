@@ -31,14 +31,21 @@ func TestSuggestKeepsStrongTrackedRelationships(t *testing.T) {
 }
 
 func TestReviewMarkdownListsSuggestionsWithEvidence(t *testing.T) {
-	r := Review{MergeBase: "0123456789abcdef", Changed: []string{"a.go"}, Suggestions: []index.Relationship{{
-		Path: "b.go", Source: "a.go", Shared: 4, Ratio: 0.5,
-		Evidence: []index.Evidence{{OID: "abcdef0123456789", Subject: "feat: x."}, {OID: "fedcba9876543210"}},
-	}}}
+	r := Review{MergeBase: "0123456789abcdef", Changed: []string{"a.go", "c.go"}, Repository: "https://github.com/o/r", Suggestions: []index.Relationship{
+		{Path: "b.go", Source: "a.go", Shared: 9, Ratio: 0.75, Evidence: []index.Evidence{{OID: "abcdef0123456789"}, {OID: "fedcba9876543210"}}},
+		{Path: "d.go", Source: "c.go", Shared: 5, Ratio: 0.625},
+	}}
 
 	md := reviewMarkdown(r)
 
-	for _, part := range []string{reviewMarker, "| `b.go` | `a.go` | 50% (4 commits) | abcdef0, fedcba9 |", "0123456"} {
+	for _, part := range []string{
+		reviewMarker,
+		"This PR changes **2 files**",
+		"| 🔥 | `b.go` | `a.go` | **9 of 12** times | [abcdef0](https://github.com/o/r/commit/abcdef0123456789) · [fedcba9](https://github.com/o/r/commit/fedcba9876543210) |",
+		"| 👀 | `d.go` | `c.go` | **5 of 8** times |  |",
+		"`.cochangeignore`",
+		"History before `0123456`",
+	} {
 		if !strings.Contains(md, part) {
 			t.Errorf("missing %q in:\n%s", part, md)
 		}
@@ -48,9 +55,18 @@ func TestReviewMarkdownListsSuggestionsWithEvidence(t *testing.T) {
 	}
 }
 
+func TestReviewMarkdownWithoutRepositoryShowsPlainCommits(t *testing.T) {
+	md := reviewMarkdown(Review{MergeBase: "0123456789abcdef", Changed: []string{"a.go"}, Suggestions: []index.Relationship{
+		{Path: "b.go", Source: "a.go", Shared: 5, Ratio: 1, Evidence: []index.Evidence{{OID: "abcdef0123456789"}}},
+	}})
+	if !strings.Contains(md, "This PR changes **1 file**") || !strings.Contains(md, "| `abcdef0` |") {
+		t.Fatal(md)
+	}
+}
+
 func TestReviewMarkdownWithoutSuggestionsIsMarkedEmpty(t *testing.T) {
-	md := reviewMarkdown(Review{MergeBase: "0123456789abcdef", Changed: []string{"a.go"}})
-	if !strings.Contains(md, reviewMarker) || !strings.Contains(md, emptyMarker) {
+	md := reviewMarkdown(Review{MergeBase: "0123456789abcdef", Changed: []string{"a.go", "b.go"}})
+	if !strings.Contains(md, reviewMarker) || !strings.Contains(md, emptyMarker) || !strings.Contains(md, "these 2 files") {
 		t.Fatal(md)
 	}
 }

@@ -9,6 +9,10 @@ later goal — ADR-0004.)
 
 ### Changed
 
+- A friendlier PR comment: "9 of 12 times" instead of a percentage, 🔥 for
+  files that almost always travel together and 👀 for the rest, commit links
+  that work from the notification email, and a ✨ "all good" when nothing is
+  missing.
 - `review` and the Action now default to 5 shared commits and a 0.5 ratio,
   measured on held-out commits of six repositories (ADR-0021): about 1 in 3
   shown suggestions is right, up from 1 in 6 without filters.
