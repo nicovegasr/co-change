@@ -237,3 +237,22 @@ func TestEvaluateRejectsInvalidOptionsAndEmptyIndex(t *testing.T) {
 		t.Error("evaluated an empty index")
 	}
 }
+
+func TestEvaluateReportsTheStrengthOfEachCoChangePrediction(t *testing.T) {
+	s := linear(t, "AB", "AB", "AB", "AC", "AB")
+	opts := DefaultEvalOptions()
+	opts.Stride, opts.Prefix = 1, "A"
+
+	e, err := s.Evaluate(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	last := e.Cases[len(e.Cases)-1] // A held out with B, trained on AB×3 and AC
+	if len(last.CoChange) != len(last.Predictions[PredictorCoChange]) {
+		t.Fatalf("strength for every prediction: %+v", last)
+	}
+	b := last.CoChange[0]
+	if b.Path != "B" || b.Shared != 3 || b.Ratio != 0.75 {
+		t.Fatalf("B strength %+v, want 3 shared of A's 4 commits", b)
+	}
+}

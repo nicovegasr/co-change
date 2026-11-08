@@ -63,6 +63,9 @@ type HoldoutCase struct {
 	Source      string              `json:"source"`
 	Targets     []string            `json:"targets"`
 	Predictions map[string][]string `json:"predictions"`
+	// CoChange is the co-change predictor's ranking with its strength, so
+	// output thresholds can be measured afterwards (ADR-0021).
+	CoChange []Relationship `json:"cochange"`
 }
 
 // Skipped counts sampled commits that could not become a case, by reason.
@@ -129,7 +132,7 @@ func (s *Store) Evaluate(ctx context.Context, opts EvalOptions) (Evaluation, err
 			if !ok {
 				continue
 			}
-			if c.Predictions, err = h.predict(ctx, tx, c.Source, commit.Timestamp); err != nil {
+			if c.Predictions, c.CoChange, err = h.predict(ctx, tx, c.Source, commit.Timestamp); err != nil {
 				return err
 			}
 			e.Cases = append(e.Cases, c)
@@ -268,19 +271,24 @@ func pickSource(oid string, sources []string) string {
 
 // predict ranks with Nib's options and both baselines. Jaccard's candidate
 // totals are exactly the global eligible frequencies already accumulated.
-func (h *trainingSet) predict(ctx context.Context, tx *bolt.Tx, source string, now int64) (map[string][]string, error) {
+func (h *trainingSet) predict(ctx context.Context, tx *bolt.Tx, source string, now int64) (map[string][]string, []Relationship, error) {
 	fid := bucket(tx, "files").Get([]byte(source))
 	unfiltered := Options{MinSupport: 1, MaxFiles: math.MaxInt, Limit: h.opts.Limit, Rank: RankShared, Ignore: h.opts.Ignore}
 	predictions := map[string][]string{}
+	var strength []Relationship
 	for name, opts := range map[string]Options{PredictorCoChange: h.opts, PredictorUnfiltered: unfiltered} {
 		obs, err := observeSource(ctx, tx, fid, opts, h.ancestors, now)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		predictions[name] = relationshipPaths(rankRelationships(tx, obs.candidates, obs.eligible, opts, h.total))
+		ranked := rankRelationships(tx, obs.candidates, obs.eligible, opts, h.total)
+		predictions[name] = relationshipPaths(ranked)
+		if name == PredictorCoChange {
+			strength = ranked
+		}
 	}
 	predictions[PredictorFrequency] = h.mostFrequent(tx, source)
-	return predictions, nil
+	return predictions, strength, nil
 }
 
 // mostFrequent ranks one extra path so that dropping the source still fills
