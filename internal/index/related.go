@@ -8,7 +8,8 @@ import (
 
 // CoupledWithAny ranks the paths that co-changed with any source, keeping each
 // path's strongest relationship (ADR-0014). Sources without history or excluded
-// by .cochangeignore are skipped, and sources never appear in the result.
+// by .cochangeignore are skipped, sources never appear in the result, and each
+// relationship names the source it was kept for.
 func (s *Store) CoupledWithAny(ctx context.Context, sources []string, opts Options) ([]Relationship, error) {
 	if err := opts.Validate(); err != nil {
 		return nil, err
@@ -23,6 +24,7 @@ func (s *Store) CoupledWithAny(ctx context.Context, sources []string, opts Optio
 			return nil, err
 		}
 		for _, rel := range r.Relationships {
+			rel.Source = source
 			if current, ok := best[rel.Path]; !ok || stronger(rel, current) {
 				best[rel.Path] = rel
 			}

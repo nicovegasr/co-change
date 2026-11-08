@@ -85,6 +85,7 @@ type Evidence struct {
 // Relationship is directional historical frequency, not dependency or risk.
 type Relationship struct {
 	Path     string     `json:"path"`
+	Source   string     `json:"source,omitempty"`
 	Shared   int        `json:"shared_commits"`
 	Ratio    float64    `json:"cochange_ratio"`
 	Score    float64    `json:"score"`

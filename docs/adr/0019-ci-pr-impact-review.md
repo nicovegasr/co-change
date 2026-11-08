@@ -24,8 +24,9 @@ repository name `conventional-commit-tui` for a CI product.
   users, so there is no compatibility shim.
 - **`co-change review --base <ref> [--json]`:**
   - PR files are `git diff --name-only <merge-base>...HEAD`.
-  - Evidence only comes from history reachable from the merge base, so the
-    PR's own commits never confirm its suggestions.
+  - Evidence only comes from the strict ancestors of the merge base (the
+    existing `--before` cutoff), so the PR's own commits never confirm its
+    suggestions.
   - Suggestions are related paths (ADR-0014 aggregation, default ranking)
     that the PR does not touch, each with the PR file it relates to most
     strongly, its ratio, shared commits and up to three evidence commits.

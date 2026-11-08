@@ -290,3 +290,34 @@ func TestRealGitRelatedAfterRefresh(t *testing.T) {
 		t.Errorf("an amended HEAD must rebuild the derived index: %v", err)
 	}
 }
+
+func TestRealGitReviewSuggestsUntouchedCoChangesFromBeforeTheBranch(t *testing.T) {
+	dir := repo(t)
+	for i := range 4 {
+		write(t, dir, "api.go", strings.Repeat("v", i+1))
+		write(t, dir, "client.go", strings.Repeat("v", i+1))
+		commit(t, dir)
+	}
+	git(t, dir, "checkout", "-q", "-b", "feature")
+	for range 3 {
+		write(t, dir, "api.go", "feature"+git(t, dir, "rev-parse", "HEAD"))
+		write(t, dir, "docs.md", "feature"+git(t, dir, "rev-parse", "HEAD"))
+		commit(t, dir)
+	}
+
+	var r Review
+	runJSON(t, dir, []string{"review", "--base", "main", "--json"}, &r)
+
+	if !reflect.DeepEqual(r.Changed, []string{"api.go", "docs.md"}) {
+		t.Fatalf("changed %v", r.Changed)
+	}
+	// client.go co-changed with api.go on main; docs.md only within the
+	// branch, which must not confirm itself.
+	if len(r.Suggestions) != 1 || r.Suggestions[0].Path != "client.go" || r.Suggestions[0].Source != "api.go" {
+		t.Fatalf("suggestions %+v", r.Suggestions)
+	}
+	var md bytes.Buffer
+	if err := Run(context.Background(), dir, []string{"review", "--base", "main"}, &md); err != nil || !strings.Contains(md.String(), "`client.go`") {
+		t.Fatalf("%v\n%s", err, md.String())
+	}
+}

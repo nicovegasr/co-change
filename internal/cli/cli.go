@@ -19,10 +19,18 @@ import (
 )
 
 const usage = `Usage:
-  co-change                                     Open the existing commit TUI
-  co-change index [--rebuild] [--json]            Index history reachable from HEAD
-  co-change coupled <file> [options]             Explain historical file co-change
-  co-change evaluate [options]                   Score coupling on held-out commits
+  co-change review --base <ref> [options]  Untouched files that usually change with a PR
+  co-change index [--rebuild] [--json]     Index history reachable from HEAD
+  co-change coupled <file> [options]       Explain historical file co-change
+  co-change evaluate [options]             Score coupling on held-out commits
+  co-change                                Open the commit TUI
+
+Review options (ADR-0019):
+  --base REF          Branch or commit the pull request targets (required)
+  --json              Emit JSON instead of the PR comment in Markdown
+  --min-support N     Minimum shared commits (default 3)
+  --min-ratio R       Minimum co-change ratio, 0..1 (default 0.3)
+  --limit N           Maximum suggestions (default 5)
 
 Coupled options:
   --json              Emit a machine-readable report
@@ -64,6 +72,8 @@ func Run(ctx context.Context, dir string, args []string, out io.Writer) error {
 		return runCoupled(ctx, dir, args[1:], out)
 	case "evaluate":
 		return runEvaluate(ctx, dir, args[1:], out)
+	case "review":
+		return runReview(ctx, dir, args[1:], out)
 	default:
 		return fmt.Errorf("unknown command %q; run co-change --help", args[0])
 	}

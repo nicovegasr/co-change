@@ -164,3 +164,31 @@ func (r Repository) walkBatch(ctx context.Context, oids []string, visit func(Com
 	}
 	return nil
 }
+
+// MergeBase is the best common ancestor of captured HEAD and revision: where a
+// pull request branched off its base.
+func (r Repository) MergeBase(ctx context.Context, revision string) (string, error) {
+	base, err := r.ResolveCommit(ctx, revision)
+	if err != nil {
+		return "", err
+	}
+	return output(ctx, r.Root, "merge-base", r.Head, base)
+}
+
+// ChangedSince lists the paths that differ between commit and captured HEAD.
+// Renames count as a deletion plus an addition, so the old path keeps its
+// history as a source.
+func (r Repository) ChangedSince(ctx context.Context, commit string) ([]string, error) {
+	out, err := output(ctx, r.Root, "diff", "--name-only", "--no-renames", "-z", commit, r.Head)
+	return paths(out), err
+}
+
+// Tracked lists the paths that exist in captured HEAD.
+func (r Repository) Tracked(ctx context.Context) ([]string, error) {
+	out, err := output(ctx, r.Root, "ls-tree", "-r", "-z", "--name-only", r.Head)
+	return paths(out), err
+}
+
+func paths(nulSeparated string) []string {
+	return strings.FieldsFunc(nulSeparated, func(c rune) bool { return c == 0 })
+}
