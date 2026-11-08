@@ -105,7 +105,7 @@ func skipped(p string) bool {
 // discoverUnits takes folders with a README.md. Code outside them is grouped
 // by top-level folder, or by child folder inside containers like src/.
 func discoverUnits(files []string, read func(string) []byte) []Unit {
-	var units []Unit
+	units := []Unit{}
 	var ids []string
 	for _, f := range files {
 		if path.Base(f) == "README.md" && path.Dir(f) != "." && !skipped(f) {
@@ -213,7 +213,7 @@ func coChanges(sets []index.ChangeSet, owner func(string) string, imports []Impo
 	for _, e := range imports {
 		linked[[2]string{e.From, e.To}], linked[[2]string{e.To, e.From}] = true, true
 	}
-	var kept []CoChange
+	kept := []CoChange{}
 	for key, pair := range pairs {
 		pair.Ratio = float64(pair.Shared) / (float64(commits[pair.A]+commits[pair.B]) / 2)
 		if pair.Shared < t.MinSupport || pair.Ratio < t.MinRatio {

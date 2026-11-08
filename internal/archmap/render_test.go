@@ -20,3 +20,15 @@ func TestRenderEmbedsTheMapWithoutBreakingTheScript(t *testing.T) {
 		t.Error("a README closed the page's script")
 	}
 }
+
+func TestRenderWritesEmptyListsNotNull(t *testing.T) {
+	var out bytes.Buffer
+	if err := Render(&out, Page{Map: Build(nil, func(string) []byte { return nil }, nil, Thresholds{MinSupport: 5, MinRatio: 0.3})}); err != nil {
+		t.Fatal(err)
+	}
+	for _, list := range []string{`"units":[]`, `"imports":[]`, `"cochanges":[]`} {
+		if !strings.Contains(out.String(), list) {
+			t.Errorf("the page script needs %s, never null", list)
+		}
+	}
+}
