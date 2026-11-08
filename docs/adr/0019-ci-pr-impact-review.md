@@ -33,7 +33,7 @@ repository name `conventional-commit-tui` for a CI product.
   - Default output is the Markdown body of the PR comment; `--json` for
     other consumers.
   - It is informational: it exits 0 whatever it finds; only errors fail.
-- **Noise filter:** a comment must not cry wolf. `review` shows at most 5
+- **Noise filter** (thresholds superseded by ADR-0021: 5 shared commits, ratio 0.5): a comment must not cry wolf. `review` shows at most 5
   suggestions with at least 3 shared commits and a co-change ratio of at least
   0.3. These thresholds are provisional product choices, not validated; they
   are flags, and measuring them with `evaluate` is follow-up work.

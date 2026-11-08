@@ -27,8 +27,8 @@ type Review struct {
 	Suggestions []index.Relationship `json:"suggestions"`
 }
 
-// reviewFilter keeps a PR comment from crying wolf. Its defaults are product
-// choices, not validated thresholds (ADR-0019).
+// reviewFilter keeps a PR comment from crying wolf. Its defaults were chosen
+// on held-out commits of six repositories (ADR-0021).
 type reviewFilter struct {
 	MinSupport int
 	MinRatio   float64
@@ -36,7 +36,7 @@ type reviewFilter struct {
 }
 
 func runReview(ctx context.Context, dir string, args []string, out io.Writer) error {
-	filter := reviewFilter{MinSupport: 3, MinRatio: 0.3, Limit: 5}
+	filter := reviewFilter{MinSupport: 5, MinRatio: 0.5, Limit: 5}
 	fs := flags("review", out)
 	base := fs.String("base", "", "Branch or commit the pull request targets")
 	asJSON := fs.Bool("json", false, "Emit JSON")

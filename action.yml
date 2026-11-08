@@ -11,10 +11,10 @@ inputs:
     default: ''
   min-support:
     description: Minimum shared commits for a suggestion.
-    default: '3'
+    default: '5'
   min-ratio:
     description: Minimum co-change ratio for a suggestion, 0..1.
-    default: '0.3'
+    default: '0.5'
   limit:
     description: Maximum suggestions in the comment.
     default: '5'

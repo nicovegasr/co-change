@@ -46,8 +46,8 @@ jobs:
 | Input | Default | Meaning |
 |---|---|---|
 | `base` | the PR's base branch | Branch or commit the PR targets |
-| `min-support` | `3` | Minimum commits both files changed in together |
-| `min-ratio` | `0.3` | Minimum share of the changed file's commits that also touched the suggestion |
+| `min-support` | `5` | Minimum commits both files changed in together |
+| `min-ratio` | `0.5` | Minimum share of the changed file's commits that also touched the suggestion |
 | `limit` | `5` | Maximum suggestions |
 | `token` | `github.token` | Token allowed to comment |
 
@@ -127,7 +127,7 @@ Precision of the top 5 suggestions on each repository's most recent commits (par
 | Personal blog (Astro) | 22.3% | **23.3%** | 11.6% |
 | mean of 7 repositories | **18.0%** | 17.3% | 6.1% |
 
-The honest reading: looking at **what changes with your file** hits about 3 times more often on average than looking at what changes most overall (from 1.7× on fzf to 10× on OkHttp). The filters add little over plain co-change on these small samples (24–52 cases per repository); on larger samples the advantage is about 2.5 points. These numbers measure ranking, not the PR comment: its thresholds (`min-support 3`, `min-ratio 0.3`) are a first choice to keep it quiet, not yet validated. Methodology in [docs/research/file-coupling-benchmarks.md](docs/research/file-coupling-benchmarks.md).
+The honest reading: looking at **what changes with your file** hits about 3 times more often on average than looking at what changes most overall (from 1.7× on fzf to 10× on OkHttp). The filters add little over plain co-change on these small samples (24–52 cases per repository); on larger samples the advantage is about 2.5 points. These numbers measure the ranking. The PR comment only shows suggestions with at least 5 shared commits and a 50% ratio, chosen on older commits of six of these repositories and confirmed on newer ones ([ADR-0021](docs/adr/0021-review-comment-thresholds.md)): **about 1 in 3 suggestions it shows is right** (34.9%), and it speaks on about 28% of single-file changes (more on real PRs, which change several files). Methodology in [docs/research/file-coupling-benchmarks.md](docs/research/file-coupling-benchmarks.md).
 
 ---
 

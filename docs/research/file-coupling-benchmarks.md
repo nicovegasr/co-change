@@ -355,3 +355,13 @@ needed four wins, so **the defaults stay**.
 
 Reproduce with `scripts/tune-coupling.py WORKDIR adr-0013 tune` and
 `scripts/tune-coupling.py WORKDIR adr-0013 validate s1/f100/recent90 s1/f50/recent90 s3/f50/shared`.
+
+## Review comment thresholds — ADR-0021 — 2026-11-08
+
+Precision of the suggestions the PR comment would show and share of cases where
+it speaks, over a 5 × 6 grid of (shared commits, ratio) on the ADR-0013 HEADs
+of six repositories. Protocol, full results and reading in
+[ADR-0021](../adr/0021-review-comment-thresholds.md); reproduce with
+`scripts/review-thresholds.py WORKDIR`. Adopted: 5 / 0.5 (validation 34.9%
+shown precision, speaks 28.2%; the earlier guess 3 / 0.3: 32.0%, 62.7%).
+

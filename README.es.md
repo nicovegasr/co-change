@@ -46,8 +46,8 @@ jobs:
 | Input | Por defecto | Qué es |
 |---|---|---|
 | `base` | la rama base del PR | Rama o commit al que apunta el PR |
-| `min-support` | `3` | Mínimo de commits en que ambos archivos cambiaron juntos |
-| `min-ratio` | `0.3` | Mínima proporción de commits del archivo cambiado que también tocaron la sugerencia |
+| `min-support` | `5` | Mínimo de commits en que ambos archivos cambiaron juntos |
+| `min-ratio` | `0.5` | Mínima proporción de commits del archivo cambiado que también tocaron la sugerencia |
 | `limit` | `5` | Máximo de sugerencias |
 | `token` | `github.token` | Token con permiso para comentar |
 
@@ -127,7 +127,7 @@ Precisión de las 5 primeras sugerencias en los commits más recientes de cada r
 | Blog personal (Astro) | 22.3% | **23.3%** | 11.6% |
 | media de 7 repos | **18.0%** | 17.3% | 6.1% |
 
-Lectura honesta: fijarse en **lo que cambia con tu archivo** acierta de media unas 3 veces más que fijarse en lo que más cambia en general (desde 1,7× en fzf hasta 10× en OkHttp). Los filtros aportan poco sobre el co-cambio simple en estas muestras pequeñas (24–52 casos por repo); en muestras más grandes la ventaja es de unos 2,5 puntos. Estos números miden el ranking, no el comentario del PR: sus umbrales (`min-support 3`, `min-ratio 0.3`) son una primera elección para que no haga ruido, aún sin validar. Metodología en [docs/research/file-coupling-benchmarks.md](docs/research/file-coupling-benchmarks.md).
+Lectura honesta: fijarse en **lo que cambia con tu archivo** acierta de media unas 3 veces más que fijarse en lo que más cambia en general (desde 1,7× en fzf hasta 10× en OkHttp). Los filtros aportan poco sobre el co-cambio simple en estas muestras pequeñas (24–52 casos por repo); en muestras más grandes la ventaja es de unos 2,5 puntos. Estos números miden el ranking. El comentario del PR solo muestra sugerencias con al menos 5 commits compartidos y un 50% de ratio, elegidos con commits antiguos de seis de estos repos y confirmados con los recientes ([ADR-0021](docs/adr/0021-review-comment-thresholds.md)): **acierta más o menos 1 de cada 3 sugerencias que muestra** (34,9%) y habla en un 28% de los cambios de un solo archivo (más en PRs reales, que tocan varios). Metodología en [docs/research/file-coupling-benchmarks.md](docs/research/file-coupling-benchmarks.md).
 
 ---
 

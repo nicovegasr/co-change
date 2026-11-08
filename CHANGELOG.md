@@ -9,6 +9,9 @@ later goal — ADR-0004.)
 
 ### Changed
 
+- `review` and the Action now default to 5 shared commits and a 0.5 ratio,
+  measured on held-out commits of six repositories (ADR-0021): about 1 in 3
+  shown suggestions is right, up from 1 in 6 without filters.
 - The product is now a CI pull-request impact review (ADR-0019). The binary,
   repository and Go module are renamed `nib` → `co-change`; `.nibignore`
   becomes `.cochangeignore`, the index moves to `.git/co-change/` and the

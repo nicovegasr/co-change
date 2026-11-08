@@ -29,8 +29,8 @@ const usage = `Usage:
 Review options (ADR-0019):
   --base REF          Branch or commit the pull request targets (required)
   --json              Emit JSON instead of the PR comment in Markdown
-  --min-support N     Minimum shared commits (default 3)
-  --min-ratio R       Minimum co-change ratio, 0..1 (default 0.3)
+  --min-support N     Minimum shared commits (default 5; ADR-0021)
+  --min-ratio R       Minimum co-change ratio, 0..1 (default 0.5)
   --limit N           Maximum suggestions (default 5)
 
 Map options (ADR-0020):

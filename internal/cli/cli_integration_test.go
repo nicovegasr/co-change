@@ -293,7 +293,7 @@ func TestRealGitRelatedAfterRefresh(t *testing.T) {
 
 func TestRealGitReviewSuggestsUntouchedCoChangesFromBeforeTheBranch(t *testing.T) {
 	dir := repo(t)
-	for i := range 4 {
+	for i := range 6 { // above review's 5 shared commits (ADR-0021)
 		write(t, dir, "api.go", strings.Repeat("v", i+1))
 		write(t, dir, "client.go", strings.Repeat("v", i+1))
 		commit(t, dir)
